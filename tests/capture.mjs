@@ -50,7 +50,7 @@ await add(d, '寻人', '问遍西市茶肆，只知她曾往北去，着青衣�
 await add(d, '还书', '《寒山拾得》，三日后归架。')
 await add(d, '磨刀', '青石上三寸水，刀锋不必太利。')
 await d.getByRole('button', { name: '盖印完成：还书' }).click({ noWaitAfter: true })
-await d.waitForTimeout(1200)
+await d.waitForTimeout(1800)
 await blur(d)
 await d.screenshot({ path: 'screenshots/final-desktop.png' })
 
@@ -82,7 +82,7 @@ const m = mobile.page
 await add(m, '寻人', '问遍西市茶肆，只知她曾往北去，着青衣。')
 await add(m, '赴约', '戌时三刻，城南旧桥。带上那柄断刃。')
 await m.getByRole('button', { name: '盖印完成：寻人' }).click({ noWaitAfter: true })
-await m.waitForTimeout(1200)
+await m.waitForTimeout(1800)
 await blur(m)
 await m.screenshot({ path: 'screenshots/final-mobile.png' })
 

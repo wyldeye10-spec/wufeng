@@ -6,6 +6,8 @@ interface MemoRowProps {
   memo: Memo
   entering: boolean
   erasing: boolean
+  leaving: boolean
+  arriving: boolean
   onEdit: (memo: Memo) => void
   onComplete: (memo: Memo) => Promise<void>
   onUndo: (memo: Memo) => Promise<void>
@@ -18,7 +20,16 @@ const SPLATS = Array.from({ length: 9 }, (_, index) => ({
   size: 2 + ((index * 7) % 4),
 }))
 
-export function MemoRow({ memo, entering, erasing, onEdit, onComplete, onUndo }: MemoRowProps) {
+export function MemoRow({
+  memo,
+  entering,
+  erasing,
+  leaving,
+  arriving,
+  onEdit,
+  onComplete,
+  onUndo,
+}: MemoRowProps) {
   const [effect, setEffect] = useState<'stamp' | 'undo' | null>(null)
   const busy = useRef(false)
 
@@ -55,6 +66,8 @@ export function MemoRow({ memo, entering, erasing, onEdit, onComplete, onUndo }:
     memo.done ? 'is-done' : 'is-open',
     entering ? 'is-entering' : '',
     erasing ? 'is-erasing' : '',
+    leaving ? 'is-leaving' : '',
+    arriving ? 'is-arriving' : '',
     effect === 'stamp' ? 'is-stamping' : '',
     effect === 'undo' ? 'is-undone' : '',
   ]

@@ -12,7 +12,9 @@ assets-src/
 
 # test noise
 tests/last-run.log
+tests/diag*.mjs
 screenshots/fail-*.png
+screenshots/check-*.png
 
 # release binaries (kept on disk; source rollback uses git tags)
 releases/*.zip

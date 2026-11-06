@@ -74,6 +74,8 @@ async function newPage(options = {}, initScript) {
 
 async function addMemo(page, title, content, pause = 100) {
   await page.getByRole('button', { name: '新增事项' }).click()
+  // 等卷纸展开动画结束再输入，避免自动化在 380ms 开卷动画中抢写受控输入框。
+  await page.waitForTimeout(420)
   await page.getByLabel('事项标题').fill(title)
   await page.getByLabel('事项内容').fill(content)
   await page.waitForFunction(
@@ -282,6 +284,15 @@ await test('朱印完成 / 内容保留 / 撤销 / 编辑不改变完成状态',
     (element) => getComputedStyle(element).animationName,
   )
   assertEqual(animationName, 'seal-drop', '落印动画名')
+
+  // 先淡出未竟条目，再切到已了之事并淡入；两个阶段不能同时发生。
+  await page.locator('.memo.is-leaving').waitFor({ state: 'attached', timeout: 2500 })
+  assertEqual(
+    await page.locator('.chapter--done .memo').count(),
+    0,
+    '未竟条目淡出完成前不应出现已了条目',
+  )
+  await page.locator('.memo.is-arriving').waitFor({ state: 'attached', timeout: 2500 })
 
   await page.waitForFunction(
     () =>

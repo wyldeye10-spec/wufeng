@@ -71,6 +71,8 @@ export default function App() {
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [enteringId, setEnteringId] = useState<string | null>(null)
   const [erasingId, setErasingId] = useState<string | null>(null)
+  const [leavingId, setLeavingId] = useState<string | null>(null)
+  const [arrivingDoneId, setArrivingDoneId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const toastId = useRef(0)
@@ -119,6 +121,14 @@ export default function App() {
     }, 140)
     return () => window.clearTimeout(timer)
   }, [enteringId, reducedMotion])
+
+  useEffect(() => {
+    if (!arrivingDoneId) return
+    const timer = window.setTimeout(() => {
+      setArrivingDoneId((current) => (current === arrivingDoneId ? null : current))
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [arrivingDoneId])
 
   const snapshot = () => {
     flipSnapshot.current = measureLayout()
@@ -214,9 +224,20 @@ export default function App() {
       throw error
     }
 
-    await wait(reducedMotion ? 0 : 560)
-    snapshot()
-    replace(next)
+    if (reducedMotion) {
+      snapshot()
+      replace(next)
+    } else {
+      // 先看朱印落定，再让未竟条目淡出；状态切换后再让已了条目淡入。
+      await wait(560)
+      setLeavingId(memo.id)
+      await wait(320)
+      snapshot()
+      replace(next)
+      setLeavingId(null)
+      setArrivingDoneId(memo.id)
+    }
+
     setAnnouncement(`《${memo.title}》已了。`)
     focusMemoControl(memo.id, '.memo__seal')
   }
@@ -305,6 +326,8 @@ export default function App() {
                           memo={memo}
                           entering={enteringId === memo.id}
                           erasing={erasingId === memo.id}
+                          leaving={leavingId === memo.id}
+                          arriving={arrivingDoneId === memo.id}
                           onEdit={(item) => setEditor({ mode: 'edit', memo: item })}
                           onComplete={complete}
                           onUndo={undo}
@@ -328,6 +351,8 @@ export default function App() {
                           memo={memo}
                           entering={enteringId === memo.id}
                           erasing={erasingId === memo.id}
+                          leaving={leavingId === memo.id}
+                          arriving={arrivingDoneId === memo.id}
                           onEdit={(item) => setEditor({ mode: 'edit', memo: item })}
                           onComplete={complete}
                           onUndo={undo}
