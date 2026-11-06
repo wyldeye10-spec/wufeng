@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# large local font/build sources (not required to run; see README)
+assets-src/
+
+# user-provided design reference (not part of the app)
+参考图/
+
+# test noise
+tests/last-run.log
+screenshots/fail-*.png
+
+# release binaries (kept on disk; source rollback uses git tags)
+releases/*.zip
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

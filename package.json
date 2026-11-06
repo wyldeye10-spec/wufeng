@@ -1,0 +1,28 @@
+{
+  "name": "wufeng",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "无锋 — 一本存在于黑暗武侠世界中的私人卷宗",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/generate-sw.mjs",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit --pretty false",
+    "test:e2e": "node tests/e2e.mjs",
+    "capture": "node tests/capture.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "playwright-core": "^1.65.0",
+    "sharp": "^0.35.5",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.7"
+  }
+}
