@@ -6,6 +6,8 @@
 
 **当前版本：1.0.2** · [变更记录](CHANGELOG.md)
 
+**在线版本**：https://wyldeye10-spec.github.io/wufeng/
+
 以《影之刃零》的黑暗武侠气质为灵感的极简私人备忘录。它不像待办软件，更像一本存在
 于黑暗江湖里的私人卷宗：记事、改事、落印、留档，仅此而已。
 
@@ -84,6 +86,7 @@ wufeng/
 │  ├─ hooks/                     # 存储、可视视口、焦点、减少动态
 │  ├─ lib/                       # IndexedDB 封装、字素计数
 │  └─ assets/fonts/              # 自托管 WOFF2 子集
+├─ .github/workflows/pages.yml   # push main 自动部署 GitHub Pages
 ├─ tests/
 │  ├─ e2e.mjs                    # 端到端验收
 │  ├─ last-report.txt            # 最近一次真实运行结果
@@ -142,6 +145,18 @@ npm run test:e2e
 
 可选：先启动 `npm run preview`，再运行 `npm run capture`，会用示例卷宗重拍
 `screenshots/final-*.png`。
+
+## GitHub Pages
+
+- 线上地址：**https://wyldeye10-spec.github.io/wufeng/**
+- 自动部署：`.github/workflows/pages.yml`。推送到 `main` 后会自动执行
+  `npm ci` → `npm run build` → 把 `dist/` 发布到 GitHub Pages。
+- 仓库设置对应：GitHub → Settings → Pages → Build and deployment →
+  Source 选择 **GitHub Actions**。
+- iPhone：用 Safari 打开线上地址 → 分享 → 添加到主屏幕。HTTPS 由 GitHub Pages
+  提供，Service Worker 与离线缓存可正常工作。
+- 线上站点的数据存在该 HTTPS origin 的 IndexedDB 中，与本地
+  `127.0.0.1` 预览、Release 里的静态包互不相通。
 
 ## 本地预览
 
