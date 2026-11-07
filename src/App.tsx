@@ -187,6 +187,22 @@ export default function App() {
     // 仅当条目重新分布时执行位移动画。
   }, [items, reducedMotion])
 
+  useEffect(() => {
+    if (!erasingId) return
+    const timer = window.setTimeout(
+      () => {
+        snapshot()
+        drop(erasingId)
+        setErasingId(null)
+        window.setTimeout(() => {
+          document.querySelector<HTMLElement>('.add-seal')?.focus({ preventScroll: true })
+        }, 60)
+      },
+      reducedMotion ? 0 : 300,
+    )
+    return () => window.clearTimeout(timer)
+  }, [erasingId, drop, reducedMotion])
+
   const create = async (draft: { title: string; content: string }) => {
     const memo = createMemo(
       clampChars(draft.title, 8).trim(),
@@ -258,8 +274,8 @@ export default function App() {
     focusMemoControl(memo.id, '.memo__stamp')
   }
 
-  const eraseCurrent = async () => {
-    if (!editor || editor.mode !== 'edit') return
+  const eraseCurrent = async (): Promise<Memo | null> => {
+    if (!editor || editor.mode !== 'edit') return null
     const target = items.find((item) => item.id === editor.memo.id) ?? editor.memo
 
     try {
@@ -268,18 +284,13 @@ export default function App() {
       notify('抹去未成，卷宗未能更新。')
       throw error
     }
+    return target
+  }
 
+  const finishErase = (target: Memo) => {
     setEditor(null)
-    await wait(reducedMotion ? 0 : 220)
     setErasingId(target.id)
-    await wait(reducedMotion ? 0 : 300)
-    snapshot()
-    drop(target.id)
-    setErasingId(null)
     setAnnouncement(`已抹去《${target.title}》。`)
-    window.setTimeout(() => {
-      document.querySelector<HTMLElement>('.add-seal')?.focus({ preventScroll: true })
-    }, 60)
   }
 
   return (
@@ -394,6 +405,7 @@ export default function App() {
           onClose={() => setEditor(null)}
           onSubmit={editor.mode === 'new' ? create : update}
           onDelete={editor.mode === 'edit' ? eraseCurrent : undefined}
+          onDeleteFinished={editor.mode === 'edit' ? finishErase : undefined}
           reducedMotion={reducedMotion}
         />
       ) : null}

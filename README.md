@@ -4,7 +4,7 @@
 >
 > 未竟之事，记于纸上。已了之事，封于朱印。
 
-**当前版本：1.0.1** · [变更记录](CHANGELOG.md)
+**当前版本：1.0.2** · [变更记录](CHANGELOG.md)
 
 以《影之刃零》的黑暗武侠气质为灵感的极简私人备忘录。它不像待办软件，更像一本存在
 于黑暗江湖里的私人卷宗：记事、改事、落印、留档，仅此而已。
@@ -39,7 +39,9 @@
   游戏原画、Logo 或界面素材。
 - 完成事项时播放三段动效：560ms 的朱印落定 → 320ms 的未竟条目淡出消散 →
   520ms 的已了条目纸墨淡入。已了记录不会消失，可再次点击朱印撤销。
-- 编辑层像一卷纸从下方展开；删除时纸面文字以墨迹消散。
+- 删除时先二次确认；点击「抹去」后确认层与卷纸层一起淡出 380ms，再让条目以
+  300ms 墨迹消散，不会瞬间闪退。
+- 编辑层像一卷纸从下方展开。
 - 键盘焦点、Escape 关闭、焦点陷阱、`prefers-reduced-motion` 降级与安全区适配均已处理。
 
 ## 技术结构
@@ -90,7 +92,8 @@ wufeng/
 ├─ releases/
 │  ├─ README.md                  # 版本存档与回退说明
 │  ├─ wufeng-1.0.0.zip           # 本机存档，gitignored
-│  └─ wufeng-1.0.1.zip           # 本机存档，gitignored
+│  ├─ wufeng-1.0.1.zip           # 本机存档，gitignored
+│  └─ wufeng-1.0.2.zip           # 本机存档，gitignored
 ├─ screenshots/                  # 最终视觉证据
 ├─ dist/                         # 生产构建（可直接静态部署）
 ├─ CHANGELOG.md                  # 1.0.1 / 1.0.0 变更记录
@@ -150,10 +153,11 @@ npm run test:e2e
 
 | 版本 | 内容 | 存档 |
 |---|---|---|
-| 1.0.1 | 当前版本：落印后未竟条目淡出、已了条目淡入 | Git tag `v1.0.1`、`releases/wufeng-1.0.1.zip` |
+| 1.0.2 | 当前版本：删除确认层/卷纸层淡出，条目再以墨迹消散 | Git tag `v1.0.2`、`releases/wufeng-1.0.2.zip` |
+| 1.0.1 | 落印后未竟条目淡出、已了条目淡入 | Git tag `v1.0.1`、`releases/wufeng-1.0.1.zip` |
 | 1.0.0 | 初次交付：完整卷宗、朱印、PWA 与验收 | Git tag `v1.0.0`、`releases/wufeng-1.0.0.zip` |
 
-回退到 1.0.0：
+回退示例（把 `v1.0.0` 换成任意目标 tag 即可）：
 
 ```bash
 git checkout v1.0.0
@@ -229,7 +233,7 @@ server {
 ## 验收结果
 
 最近一次运行：**15 / 15 通过**。环境为本机 Windows + Chrome
-156.0.8078.74（headless）+ Vite Preview。完整输出见
+156.0.8078.80（headless）+ Vite Preview。完整输出见
 [tests/last-report.txt](tests/last-report.txt)，机器可读结果见
 [tests/report.json](tests/report.json)。
 
@@ -239,7 +243,7 @@ server {
 | 2 | 新增、8 字标题、50 字内容、Emoji 字素、刷新保留 | PASS | 真实输入事件与 IndexedDB 检查 |
 | 3 | 必填校验、编辑、不产生重复记录 | PASS | 表单与 IDB 双重校验 |
 | 4 | 落印完成、淡出/淡入、内容保留、刷新、撤销、编辑保持完成 | PASS | 断言 `seal-drop`，并验证未竟条目淡出时已了列表为空、随后才出现 `.is-arriving` 已了条目 |
-| 5 | 删除二次确认、留下/抹去、刷新不复活 | PASS | 未竟事项 |
+| 5 | 删除二次确认、确认层淡出、留下/抹去、刷新不复活 | PASS | 断言 `modal-fade-out` / `composer-fade-out`，淡出后才出现 `.memo.is-erasing`，最后才移除条目 |
 | 6 | 已了事项也可抹去 | PASS | 已了事项 |
 | 7 | 排序与完成迁移 | PASS | 创建时间倒序 |
 | 8 | 中文输入法组合与提交 | PASS | Chrome DevTools `Input.imeSetComposition` |
@@ -281,6 +285,9 @@ server {
   保存区短暂仍停在旧的 844px 高度。现在同时监听 `window.resize` /
   `orientationchange`，并在输入焦点变化后延迟校准 140ms 与 360ms；重新实测
   460px 高度下保存区落在可视视口内。
+- 1.0.2 的删除回归中发现点击「抹去」会立即卸载确认层与卷纸层，造成闪断。现在先把
+  删除事务落库，再让确认层与卷纸层同步淡出 380ms；淡出结束后才开始条目墨迹消散
+  300ms，最后移除条目并更新列表。
 
 ## 字体与素材
 

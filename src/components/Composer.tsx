@@ -11,19 +11,29 @@ interface ComposerProps {
   memo?: Memo
   onClose: () => void
   onSubmit: (draft: { title: string; content: string }) => Promise<void>
-  onDelete?: () => Promise<void>
+  onDelete?: () => Promise<Memo | null>
+  onDeleteFinished?: (memo: Memo) => void
   reducedMotion: boolean
 }
 
 const TITLE_LIMIT = 8
 const CONTENT_LIMIT = 50
 
-export function Composer({ mode, memo, onClose, onSubmit, onDelete, reducedMotion }: ComposerProps) {
+export function Composer({
+  mode,
+  memo,
+  onClose,
+  onSubmit,
+  onDelete,
+  onDeleteFinished,
+  reducedMotion,
+}: ComposerProps) {
   const [title, setTitle] = useState(memo?.title ?? '')
   const [content, setContent] = useState(memo?.content ?? '')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [closing, setClosing] = useState(false)
   const composing = useRef(false)
   const sheetRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLInputElement>(null)
@@ -85,20 +95,33 @@ export function Composer({ mode, memo, onClose, onSubmit, onDelete, reducedMotio
   }
 
   const remove = async () => {
-    if (!onDelete || saving) return
-    setConfirming(false)
+    if (!onDelete || !onDeleteFinished || saving) return
     setError(null)
     setSaving(true)
     try {
-      await onDelete()
+      const target = await onDelete()
+      if (!target) {
+        setSaving(false)
+        return
+      }
+      // 数据先落定；确认层与卷纸层一起淡出，再让列表里的条目以墨迹消散。
+      setClosing(true)
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, reducedMotion ? 0 : 380)
+      })
+      onDeleteFinished(target)
     } catch {
+      setConfirming(false)
       setError('抹去未成，卷宗未能更新。')
       setSaving(false)
     }
   }
 
   return createPortal(
-    <div className={`composer${reducedMotion ? ' composer--calm' : ''}`} role="presentation">
+    <div
+      className={`composer${reducedMotion ? ' composer--calm' : ''}${closing ? ' composer--closing' : ''}`}
+      role="presentation"
+    >
       <div className="composer__backdrop" aria-hidden="true" />
 
       <div className="composer__viewport">
@@ -248,6 +271,7 @@ export function Composer({ mode, memo, onClose, onSubmit, onDelete, reducedMotio
           onCancel={() => setConfirming(false)}
           onConfirm={() => void remove()}
           busy={saving}
+          closing={closing}
         />
       ) : null}
     </div>,

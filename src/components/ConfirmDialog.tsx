@@ -6,9 +6,15 @@ interface ConfirmDialogProps {
   onCancel: () => void
   onConfirm: () => void
   busy?: boolean
+  closing?: boolean
 }
 
-export function ConfirmDialog({ onCancel, onConfirm, busy = false }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  onCancel,
+  onConfirm,
+  busy = false,
+  closing = false,
+}: ConfirmDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const titleId = useId()
@@ -17,13 +23,13 @@ export function ConfirmDialog({ onCancel, onConfirm, busy = false }: ConfirmDial
 
   return createPortal(
     <div
-      className="modal modal--confirm"
+      className={`modal modal--confirm${closing ? ' modal--closing' : ''}`}
       role="presentation"
       onClick={(event) => {
-        if (event.target === event.currentTarget && !busy) onCancel()
+        if (event.target === event.currentTarget && !busy && !closing) onCancel()
       }}
       onKeyDown={(event) => {
-        if (busy) return
+        if (busy || closing) return
         trapDialogKeys(event, panelRef.current, onCancel)
       }}
     >

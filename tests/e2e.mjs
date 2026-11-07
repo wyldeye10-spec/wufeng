@@ -376,12 +376,45 @@ await test('删除二次确认 / 留下 / 抹去 / 持久化', async () => {
   )
 
   await page.getByRole('button', { name: '抹去此事' }).click()
+  await page.evaluate(() => {
+    window.__wufengDeleteProbe = { erasing: false, composerClosing: false, modalClosing: false }
+    const observer = new MutationObserver(() => {
+      const probe = window.__wufengDeleteProbe
+      if (document.querySelector('.memo.is-erasing')) probe.erasing = true
+      if (document.querySelector('.composer--closing')) probe.composerClosing = true
+      if (document.querySelector('.modal--closing')) probe.modalClosing = true
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+      childList: true,
+      subtree: true,
+    })
+  })
   await page.getByRole('alertdialog').getByRole('button', { name: '抹去' }).click()
+  await page.locator('.composer--closing').waitFor({ state: 'attached', timeout: 2000 })
+  const confirmModal = page.locator('.modal--confirm')
+  assert(await confirmModal.isVisible(), '点击抹去后确认窗口不应瞬间消失')
+  const modalAnimation = await confirmModal.evaluate(
+    (element) => getComputedStyle(element).animationName,
+  )
+  assertEqual(modalAnimation, 'modal-fade-out', '确认窗口淡出动画')
+  const composerAnimation = await page
+    .locator('.composer--closing')
+    .evaluate((element) => getComputedStyle(element).animationName)
+  assertEqual(composerAnimation, 'composer-fade-out', '卷纸层淡出动画')
+  await confirmModal.waitFor({ state: 'detached', timeout: 3000 })
   await waitForComposerGone(page)
   await page.waitForFunction(
     () => document.querySelectorAll('.memo').length === 0,
     undefined,
     { timeout: 5000 },
+  )
+  const deleteProbe = await page.evaluate(() => window.__wufengDeleteProbe)
+  assert(deleteProbe.erasing, '删除时应出现条目墨迹消散')
+  assert(
+    deleteProbe.composerClosing && deleteProbe.modalClosing,
+    '确认层与卷纸层应实际经过淡出状态',
   )
   assert(await page.getByText('此间暂无未竟之事。').isVisible(), '删除后未显示未竟空状态')
   assertEqual((await readStore(page)).length, 0, '删除后本地卷宗仍有余条')
