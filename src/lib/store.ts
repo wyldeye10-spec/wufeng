@@ -255,6 +255,46 @@ export class JournalStore {
     this.memory = sortMemos([...this.memory.filter((item) => item.id !== memo.id), memo])
   }
 
+  /** 批量写入：导入备份时一次事务落库，避免逐条写带来的半途状态。 */
+  async writeMany(memos: Memo[]): Promise<void> {
+    if (memos.length === 0) return
+
+    if (this.mode === 'idb' && this.db) {
+      try {
+        const tx = this.db.transaction(STORE_NAME, 'readwrite')
+        const store = tx.objectStore(STORE_NAME)
+        for (const memo of memos) store.put(memo)
+        await transactionDone(tx)
+        return
+      } catch (error) {
+        throw new StorageError('批量写入本地卷宗失败', error)
+      }
+    }
+
+    if (this.mode === 'local') {
+      try {
+        const raw = window.localStorage.getItem(LOCAL_KEY)
+        const parsed: unknown = raw ? JSON.parse(raw) : []
+        const rows = Array.isArray(parsed) ? parsed : []
+        const byId = new Map<string, unknown>()
+        for (const row of rows) {
+          if (row && typeof row === 'object' && typeof (row as Memo).id === 'string') {
+            byId.set((row as Memo).id, row)
+          }
+        }
+        for (const memo of memos) byId.set(memo.id, memo)
+        window.localStorage.setItem(LOCAL_KEY, JSON.stringify([...byId.values()]))
+        return
+      } catch (error) {
+        throw new StorageError('批量写入兼容卷库失败', error)
+      }
+    }
+
+    const byId = new Map(this.memory.map((memo) => [memo.id, memo]))
+    for (const memo of memos) byId.set(memo.id, memo)
+    this.memory = sortMemos([...byId.values()])
+  }
+
   async erase(id: string): Promise<void> {
     if (this.mode === 'idb' && this.db) {
       try {

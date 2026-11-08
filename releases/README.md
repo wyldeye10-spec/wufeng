@@ -5,6 +5,7 @@ Git tag 为准；本机丢失 zip 时，可用对应 tag 重新构建。
 
 | 版本 | 日期 | 内容 | Git | 本机包 |
 |---|---|---|---|---|
+| 2.0.1 | 2026-11-08 | 卷宗维护：导出/导入 JSON 备份，并入式恢复 | `v2.0.1` | `wufeng-2.0.1.zip` |
 | 1.0.3 | 2026-11-08 | 标题/正文改用霞鹜文楷 GB，标题层级加大 | `v1.0.3` | `wufeng-1.0.3.zip` |
 | 1.0.2 | 2026-11-07 | 删除确认层/卷纸层淡出，条目再以墨迹消散 | `v1.0.2` | `wufeng-1.0.2.zip` |
 | 1.0.1 | 2026-11-06 | 完成动效改为「落印 → 未竟淡出 → 已了淡入」 | `v1.0.1` | `wufeng-1.0.1.zip` |
@@ -13,7 +14,7 @@ Git tag 为准；本机丢失 zip 时，可用对应 tag 重新构建。
 ## 回退
 
 ```bash
-git checkout v1.0.0
+git checkout v2.0.1
 npm ci
 npm run build
 npm run preview
@@ -25,6 +26,7 @@ npm run preview
 ## 说明
 
 - 各 zip 是当时构建的完整快照，包含源码、`dist/`、字体、测试报告与截图。
-- 1.0.3 起测试为 16 组；字体快照包含新增的 `wufeng-kai.woff2`。
+- 2.0.1 起测试为 18 组；包内新增 `src/lib/archive.ts` 与 `ArchiveTools.tsx`。
+- 1.0.3 起字体快照包含 `wufeng-kai.woff2`。
 - 版本号同时记录在 `package.json` 与 Git tag 中。
 - Service Worker 的缓存名由构建内容哈希生成，切换版本后旧缓存会自动清理。

@@ -1084,6 +1084,93 @@ textarea::placeholder {
 
 
 
+.archive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.archive__label {
+  margin: 0;
+  color: var(--copper-soft);
+  font-size: 9px;
+  letter-spacing: 0.38em;
+  line-height: 1;
+}
+
+.archive__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.archive__action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 15px;
+  border: 1px solid rgba(120, 100, 73, 0.36);
+  color: var(--text-dim);
+  font-family: var(--font-serif);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease,
+    transform 140ms ease;
+}
+
+.archive__action:hover,
+.archive__action:focus-visible {
+  border-color: rgba(158, 41, 37, 0.62);
+  background: rgba(158, 41, 37, 0.07);
+  color: var(--paper);
+}
+
+.archive__action:active {
+  transform: translateY(1px);
+}
+
+.archive__action:disabled {
+  opacity: 0.55;
+}
+
+.archive__seal {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  place-items: center;
+  background: linear-gradient(148deg, #a9342e, #7d1b18);
+  clip-path: polygon(
+    6% 1%, 24% 3%, 43% 0%, 62% 2%, 81% 0%, 97% 5%, 100% 24%, 97% 43%,
+    100% 62%, 97% 81%, 95% 98%, 76% 100%, 57% 97%, 38% 100%, 18% 97%,
+    2% 94%, 0% 74%, 3% 55%, 0% 35%, 2% 17%
+  );
+  color: #e9dfca;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  transform: rotate(-3deg);
+}
+
+.archive__hint {
+  max-width: 32em;
+  margin: 12px 0 0;
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.85;
+}
+
+.archive + .colophon__rule {
+  margin-top: 28px;
+}
+
 .colophon {
   margin-top: clamp(64px, 10vw, 92px);
   padding-bottom: calc(var(--safe-bottom) + 12px);
@@ -2175,6 +2262,18 @@ textarea::placeholder {
     letter-spacing: 0.2em;
   }
 
+  .archive__action {
+    min-height: 42px;
+    gap: 8px;
+    padding: 0 10px;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+  }
+
+  .archive__hint {
+    font-size: 9.5px;
+  }
+
   .empty--open p::before {
     width: 16px;
     margin-right: 10px;
@@ -2277,6 +2376,26 @@ textarea::placeholder {
 
   .memo__content {
     font-size: 14.5px;
+  }
+
+  .archive__actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .archive__action {
+    width: 150px;
+    justify-content: center;
+    padding: 0 9px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  .archive__seal {
+    width: 19px;
+    height: 19px;
+    font-size: 9px;
   }
 
   .memo {

@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AddSeal } from './components/AddSeal'
+import { ArchiveTools } from './components/ArchiveTools'
 import { Composer } from './components/Composer'
 import { EmptyState } from './components/EmptyState'
 import { Masthead } from './components/Masthead'
@@ -84,7 +85,8 @@ export default function App() {
     setToast({ id: toastId.current, message })
   }
 
-  const { ready, mode, loadError, items, write, erase, insert, replace, drop } = journal
+  const { ready, mode, loadError, items, write, writeMany, erase, insert, merge, replace, drop } =
+    journal
 
   const open = useMemo(() => items.filter((memo) => !memo.done), [items])
   const done = useMemo(() => items.filter((memo) => memo.done), [items])
@@ -293,6 +295,13 @@ export default function App() {
     setAnnouncement(`已抹去《${target.title}》。`)
   }
 
+  const importMemos = async (incoming: Memo[]) => {
+    await writeMany(incoming)
+    snapshot()
+    merge(incoming)
+    setAnnouncement(`已并入 ${incoming.length} 条记录。`)
+  }
+
   return (
     <div className="app">
       <div className="app__atmosphere" aria-hidden="true">
@@ -380,6 +389,9 @@ export default function App() {
         </main>
 
         <footer className="colophon">
+          {ready && !loadError ? (
+            <ArchiveTools memos={items} onImport={importMemos} onNotify={notify} />
+          ) : null}
           <span className="colophon__rule" aria-hidden="true" />
           <p className="colophon__verse">事有始终，念有归处。</p>
           <p className="colophon__note">

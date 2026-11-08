@@ -1,6 +1,6 @@
 import { chromium } from 'playwright-core'
 import { preview } from 'vite'
-import { access, mkdir, writeFile } from 'node:fs/promises'
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const ROOT = process.cwd()
@@ -50,6 +50,7 @@ async function newPage(options = {}, initScript) {
     colorScheme: 'dark',
     locale: 'zh-CN',
     reducedMotion: 'no-preference',
+    acceptDownloads: true,
     ...options,
   })
   contexts.push(context)
@@ -449,7 +450,7 @@ await test('已了之事同样可以抹去', async () => {
   assertEqual(await page.locator('.memo').count(), 0, '刷新后已了事项复现')
 })
 
-// 6. 排序
+// 7. 排序
 await test('排序 / 完成迁移 / 撤销归位', async () => {
   const { page } = await newPage()
   await addMemo(page, '甲一', '第一笔。')
@@ -488,7 +489,7 @@ await test('排序 / 完成迁移 / 撤销归位', async () => {
   assertArray(await titles(page, '.chapter--done'), ['甲一'], '撤销后已了排序')
 })
 
-// 7. 中文输入法
+// 8. 中文输入法
 await test('中文输入法组合 / 提交 / 组合期间不截断', async () => {
   const { page, context } = await newPage()
   await page.getByRole('button', { name: '新增事项' }).click()
@@ -525,7 +526,7 @@ await test('中文输入法组合 / 提交 / 组合期间不截断', async () =>
   assertEqual(await page.locator('.field__count').nth(0).textContent(), '8/8', '提交后计数')
 })
 
-// 8. 关闭后重开
+// 9. 关闭后重开
 await test('关闭页面后重新打开仍保留记录', async () => {
   const { context, page } = await newPage()
   await addMemo(page, '长夜', '灯下留书，明日再读。')
@@ -541,7 +542,159 @@ await test('关闭页面后重新打开仍保留记录', async () => {
   activePage = reopened
 })
 
-// 9. PWA
+// 10. 导出卷宗
+await test('导出卷宗 / JSON 结构与下载文件名', async () => {
+  const { page } = await newPage({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  })
+  await addMemo(page, '导出未竟', '未竟之事，也要留底。')
+  await addMemo(page, '导出已了', '已了之事，封入朱印。')
+  await page.getByRole('button', { name: '盖印完成：导出已了' }).click({ noWaitAfter: true })
+  await page.waitForTimeout(1800)
+
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: '导出卷宗' }).click()
+  const download = await downloadPromise
+  assert(
+    /^wufeng-backup-\d{8}-\d{4}\.json$/.test(download.suggestedFilename()),
+    `导出文件名不符合预期：${download.suggestedFilename()}`,
+  )
+  const file = await download.path()
+  assert(file, '下载文件没有落盘')
+  const archive = JSON.parse(await readFile(file, 'utf8'))
+  assertEqual(archive.app, '无锋', '备份应用名')
+  assertEqual(archive.format, 'wufeng-journal', '备份格式')
+  assertEqual(archive.version, 1, '备份版本')
+  assert(Array.isArray(archive.memos), '备份 memos 不是数组')
+  assertEqual(archive.memos.length, 2, '备份记录数')
+
+  const open = archive.memos.find((memo) => memo.title === '导出未竟')
+  const done = archive.memos.find((memo) => memo.title === '导出已了')
+  assert(open && open.done === false && open.completedAt === null, '未竟记录状态不正确')
+  assert(
+    done && done.done === true && typeof done.completedAt === 'number',
+    '已了记录状态不正确',
+  )
+  assertEqual(open.content, '未竟之事，也要留底。', '未竟正文')
+  assertEqual(done.content, '已了之事，封入朱印。', '已了正文')
+})
+
+// 11. 导入卷宗
+await test('导入卷宗 / 取消 / 并入与同号覆盖 / 持久化 / 非法文件拒绝', async () => {
+  const { page } = await newPage({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  })
+  await addMemo(page, '原有', '旧文留在卷中。')
+  const stored = await readStore(page)
+  const existing = stored.find((memo) => memo.title === '原有')
+  assert(existing, '未读到原有记录')
+
+  const base = Date.now()
+  const backup = {
+    app: '无锋',
+    format: 'wufeng-journal',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    memos: [
+      {
+        id: existing.id,
+        title: '原有',
+        content: '备份里的新文。',
+        done: false,
+        createdAt: existing.createdAt,
+        completedAt: null,
+      },
+      {
+        id: 'import-open-1',
+        title: '并入',
+        content: '从备份并入的未竟。',
+        done: false,
+        createdAt: base + 1000,
+        completedAt: null,
+      },
+      {
+        id: 'import-done-1',
+        title: '旧印',
+        content: '从备份带来的已了。',
+        done: true,
+        createdAt: base + 2000,
+        completedAt: base + 3000,
+      },
+    ],
+  }
+  const buffer = Buffer.from(JSON.stringify(backup), 'utf8')
+  const openImport = async () => {
+    const chooserPromise = page.waitForEvent('filechooser')
+    await page.getByRole('button', { name: '导入卷宗' }).click()
+    const chooser = await chooserPromise
+    await chooser.setFiles({ name: 'wufeng-backup-test.json', mimeType: 'application/json', buffer })
+  }
+
+  await openImport()
+  let dialog = page.getByRole('alertdialog')
+  await dialog.waitFor({ state: 'visible' })
+  const note = (await dialog.textContent()) ?? ''
+  assert(note.includes('新增 2 条'), `导入摘要缺少新增数：${note}`)
+  assert(note.includes('覆盖 1 条同号旧记'), `导入摘要缺少覆盖数：${note}`)
+  await page.waitForTimeout(450)
+  await page.screenshot({ path: path.join(SHOTS, 'final-import-dialog.png') })
+
+  await dialog.getByRole('button', { name: '再想想' }).click()
+  await dialog.waitFor({ state: 'detached' })
+  assertEqual(await page.locator('.memo').count(), 1, '取消导入不应改动卷宗')
+
+  await openImport()
+  dialog = page.getByRole('alertdialog')
+  await dialog.waitFor({ state: 'visible' })
+  await dialog.getByRole('button', { name: '并入' }).click()
+  await dialog.waitFor({ state: 'detached' })
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('.chapter--open .memo__title')).some(
+        (element) => element.textContent === '并入',
+      ),
+    undefined,
+    { timeout: 6000 },
+  )
+
+  assertArray(await titles(page, '.chapter--open'), ['并入', '原有'], '并入后的未竟列表')
+  assertArray(await titles(page, '.chapter--done'), ['旧印'], '并入后的已了列表')
+  assert(await page.getByText('备份里的新文。').isVisible(), '同号旧记未被覆盖')
+  assertEqual(await page.getByText('旧文留在卷中。').count(), 0, '旧正文不应残留')
+
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('.chapter--open .memo__title')).some(
+        (element) => element.textContent === '并入',
+      ),
+    undefined,
+    { timeout: 6000 },
+  )
+  assertArray(await titles(page, '.chapter--open'), ['并入', '原有'], '刷新后的未竟列表')
+  assertArray(await titles(page, '.chapter--done'), ['旧印'], '刷新后的已了列表')
+
+  const before = await page.locator('.memo').count()
+  const chooserPromise = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: '导入卷宗' }).click()
+  const chooser = await chooserPromise
+  await chooser.setFiles({
+    name: 'not-a-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{"hello":"world"}', 'utf8'),
+  })
+  await page.getByText('导入失败：这不是无锋的卷宗备份。').waitFor({ timeout: 4000 })
+  assertEqual(await page.locator('.memo').count(), before, '非法文件不应改动卷宗')
+  assertEqual(await page.getByRole('alertdialog').count(), 0, '非法文件不应打开确认框')
+})
+
+// 12. PWA
 await test('PWA 清单 / 图标 / 离线重载', async () => {
   const { context, page } = await newPage({ viewport: { width: 390, height: 844 } })
   await addMemo(page, '离线试记', '断网之后，此卷仍在。')
@@ -640,7 +793,7 @@ await test('PWA 清单 / 图标 / 离线重载', async () => {
   await page.screenshot({ path: path.join(SHOTS, 'final-offline.png'), fullPage: true })
 })
 
-// 10. IndexedDB 降级到 localStorage
+// 13. IndexedDB 降级到 localStorage
 await test('IndexedDB 不可用时兼容存储仍可持久化', async () => {
   const { page } = await newPage({}, () => {
     IDBFactory.prototype.open = function () {
@@ -660,7 +813,7 @@ await test('IndexedDB 不可用时兼容存储仍可持久化', async () => {
   assertEqual(await page.locator('.storage-warning').count(), 0, '兼容模式不应显示内存警告')
 })
 
-// 11. 全部本地存储不可用 → 内存
+// 14. 全部本地存储不可用 → 内存
 await test('本地存储全部不可用时明确警示且不崩溃', async () => {
   const { page } = await newPage({}, () => {
     IDBFactory.prototype.open = function () {
@@ -683,7 +836,7 @@ await test('本地存储全部不可用时明确警示且不崩溃', async () =>
   assert(await page.locator('.storage-warning').isVisible(), '刷新后警示应仍在')
 })
 
-// 12. 移动端
+// 15. 移动端
 await test('移动端 390/320 布局与键盘高度压测', async () => {
   const { page } = await newPage({
     viewport: { width: 390, height: 844 },
@@ -757,7 +910,7 @@ await test('移动端 390/320 布局与键盘高度压测', async () => {
   await page.screenshot({ path: path.join(SHOTS, 'final-mobile-320.png') })
 })
 
-// 13. 减少动态
+// 16. 减少动态
 await test('prefers-reduced-motion 下完成流程仍可用', async () => {
   const { page } = await newPage({ reducedMotion: 'reduce' })
   assert(
@@ -776,7 +929,7 @@ await test('prefers-reduced-motion 下完成流程仍可用', async () => {
   assert(elapsed < 1500, `减少动态模式下完成耗时过长：${elapsed}ms`)
 })
 
-// 14. 键盘焦点
+// 17. 键盘焦点
 await test('Escape 关闭 / 焦点归还 / 确认框焦点', async () => {
   const { page } = await newPage()
   const addButton = page.getByRole('button', { name: '新增事项' })
@@ -822,7 +975,7 @@ await test('Escape 关闭 / 焦点归还 / 确认框焦点', async () => {
   assert(await page.locator('.sheet').isVisible(), 'Escape 应只关闭确认框')
 })
 
-// 16. 楷体与标题层级
+// 18. 楷体与标题层级
 await test('楷体字族 / 标题大于正文 / 编辑卷纸同用楷体', async () => {
   const { page } = await newPage({
     viewport: { width: 390, height: 844 },

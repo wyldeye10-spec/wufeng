@@ -7,6 +7,11 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   busy?: boolean
   closing?: boolean
+  seal?: string
+  title?: string
+  note?: string
+  confirmLabel?: string
+  cancelLabel?: string
 }
 
 export function ConfirmDialog({
@@ -14,6 +19,11 @@ export function ConfirmDialog({
   onConfirm,
   busy = false,
   closing = false,
+  seal = '抹',
+  title = '此事将从卷宗中抹去。',
+  note = '抹去之后，不可复得。',
+  confirmLabel = '抹去',
+  cancelLabel = '留下',
 }: ConfirmDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
@@ -43,13 +53,13 @@ export function ConfirmDialog({
         tabIndex={-1}
       >
         <span className="confirm__seal" aria-hidden="true">
-          抹
+          {seal}
         </span>
         <p className="confirm__title" id={titleId}>
-          此事将从卷宗中抹去。
+          {title}
         </p>
         <p className="confirm__note" id={descriptionId}>
-          抹去之后，不可复得。
+          {note}
         </p>
         <div className="confirm__actions">
           <button
@@ -59,7 +69,7 @@ export function ConfirmDialog({
             disabled={busy}
             ref={cancelRef}
           >
-            留下
+            {cancelLabel}
           </button>
           <button
             type="button"
@@ -67,7 +77,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={busy}
           >
-            {busy ? '…' : '抹去'}
+            {busy ? '…' : confirmLabel}
           </button>
         </div>
       </div>

@@ -19,8 +19,10 @@ export interface Journal {
   mode: StorageMode
   loadError: string | null
   write: (memo: Memo) => Promise<void>
+  writeMany: (memos: Memo[]) => Promise<void>
   erase: (id: string) => Promise<void>
   insert: (memo: Memo) => void
+  merge: (memos: Memo[]) => void
   replace: (memo: Memo) => void
   drop: (id: string) => void
   retry: () => void
@@ -60,6 +62,12 @@ export function useJournal(): Journal {
     await store.write(memo)
   }, [])
 
+  const writeMany = useCallback(async (memos: Memo[]) => {
+    const store = storeRef.current
+    if (!store) throw new StorageError('卷库尚未启封')
+    await store.writeMany(memos)
+  }, [])
+
   const erase = useCallback(async (id: string) => {
     const store = storeRef.current
     if (!store) throw new StorageError('卷库尚未启封')
@@ -68,6 +76,14 @@ export function useJournal(): Journal {
 
   const insert = useCallback((memo: Memo) => {
     setItems((prev) => sortMemos([...prev.filter((item) => item.id !== memo.id), memo]))
+  }, [])
+
+  const merge = useCallback((memos: Memo[]) => {
+    setItems((prev) => {
+      const byId = new Map(prev.map((memo) => [memo.id, memo]))
+      for (const memo of memos) byId.set(memo.id, memo)
+      return sortMemos([...byId.values()])
+    })
   }, [])
 
   const replace = useCallback((memo: Memo) => {
@@ -87,8 +103,10 @@ export function useJournal(): Journal {
     mode,
     loadError,
     write,
+    writeMany,
     erase,
     insert,
+    merge,
     replace,
     drop,
     retry: () => {
