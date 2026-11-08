@@ -2,12 +2,27 @@ export interface Memo {
   id: string
   title: string
   content: string
+  icon: MemoIcon
   done: boolean
   createdAt: number
   completedAt: number | null
 }
 
 export type StorageMode = 'idb' | 'local' | 'memory'
+
+export type MemoIcon = 'gold-sword' | 'purple-sword' | 'white-scroll'
+
+export const DEFAULT_MEMO_ICON: MemoIcon = 'gold-sword'
+
+const MEMO_ICON_SET = new Set<string>(['gold-sword', 'purple-sword', 'white-scroll'])
+
+export function isMemoIcon(value: unknown): value is MemoIcon {
+  return typeof value === 'string' && MEMO_ICON_SET.has(value)
+}
+
+export function normalizeMemoIcon(value: unknown): MemoIcon {
+  return isMemoIcon(value) ? value : DEFAULT_MEMO_ICON
+}
 
 const DB_NAME = 'wufeng-juanzong'
 const DB_VERSION = 1
@@ -36,11 +51,16 @@ function newId(): string {
   return `m-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 }
 
-export function createMemo(title: string, content: string): Memo {
+export function createMemo(
+  title: string,
+  content: string,
+  icon: MemoIcon = DEFAULT_MEMO_ICON,
+): Memo {
   return {
     id: newId(),
     title,
     content,
+    icon,
     done: false,
     createdAt: Date.now(),
     completedAt: null,
@@ -69,6 +89,7 @@ function normalizeMemo(raw: unknown): Memo | null {
     id: value.id,
     title: value.title,
     content: value.content,
+    icon: normalizeMemoIcon(value.icon),
     done,
     createdAt,
     completedAt,

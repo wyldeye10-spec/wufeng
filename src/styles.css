@@ -678,9 +678,49 @@ textarea::placeholder {
 
 .memo__head {
   display: flex;
-  align-items: baseline;
-  gap: 9px;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
+}
+
+.memo__mark {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.34));
+}
+
+.memo-mark {
+  --mark-accent: #dabf83;
+  display: block;
+  overflow: visible;
+}
+
+.memo-mark--gold-sword {
+  --mark-accent: #dabf83;
+}
+
+.memo-mark--purple-sword {
+  --mark-accent: #907ab9;
+}
+
+.memo-mark--white-scroll {
+  --mark-accent: #f1ead9;
+}
+
+.memo-mark__frame {
+  fill: #12100d;
+  stroke: rgba(216, 209, 195, 0.22);
+  stroke-width: 1px;
+}
+
+.memo-mark__glyph {
+  fill: var(--mark-accent);
+}
+
+.memo-mark__border {
+  fill: none;
+  stroke: var(--mark-accent);
 }
 
 .memo__title {
@@ -847,6 +887,11 @@ textarea::placeholder {
 
 .memo.is-done .memo__content {
   color: #716a5f;
+}
+
+.memo.is-done .memo__mark {
+  opacity: 0.52;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .memo.is-done .memo__stamp-corner {
@@ -1588,6 +1633,73 @@ textarea::placeholder {
   margin-top: 4px;
 }
 
+.field--mark {
+  margin-top: 0;
+}
+
+.field--mark + .field {
+  margin-top: 18px;
+}
+
+.mark-picker {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.mark-choice {
+  position: relative;
+  display: flex;
+  width: 56px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 0 6px;
+  border: 1px solid rgba(25, 20, 16, 0.12);
+  background: transparent;
+  color: rgba(25, 20, 16, 0.55);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.mark-choice:hover {
+  border-color: rgba(120, 100, 73, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mark-choice.is-selected {
+  border-color: rgba(158, 41, 37, 0.62);
+  background: rgba(158, 41, 37, 0.06);
+  color: var(--cinnabar-ink);
+}
+
+.mark-choice.is-selected::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 3px;
+  height: 3px;
+  background: var(--cinnabar);
+}
+
+.mark-choice:disabled {
+  opacity: 0.55;
+}
+
+.mark-choice .memo-mark {
+  width: 26px;
+  height: 26px;
+}
+
+.mark-choice__label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  line-height: 1;
+}
+
 .field__top {
   display: flex;
   align-items: baseline;
@@ -2248,6 +2360,15 @@ textarea::placeholder {
     letter-spacing: 0.08em;
   }
 
+  .memo__head {
+    gap: 9px;
+  }
+
+  .memo__mark {
+    width: 26px;
+    height: 26px;
+  }
+
   .memo__content {
     margin-top: 7px;
     line-height: 1.9;
@@ -2374,6 +2495,15 @@ textarea::placeholder {
     font-size: 21px;
   }
 
+  .memo__head {
+    gap: 7px;
+  }
+
+  .memo__mark {
+    width: 24px;
+    height: 24px;
+  }
+
   .memo__content {
     font-size: 14.5px;
   }
@@ -2396,6 +2526,10 @@ textarea::placeholder {
     width: 19px;
     height: 19px;
     font-size: 9px;
+  }
+
+  .mark-choice {
+    width: 52px;
   }
 
   .memo {

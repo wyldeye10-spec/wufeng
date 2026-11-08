@@ -1,5 +1,6 @@
 import { useRef, useState, type CSSProperties } from 'react'
 import type { Memo } from '../lib/store'
+import { MemoMark } from './MemoMark'
 import { Seal } from './Seal'
 
 interface MemoRowProps {
@@ -84,6 +85,7 @@ export function MemoRow({
         disabled={effect !== null}
       >
         <span className="memo__head">
+          <MemoMark icon={memo.icon} size={26} className="memo__mark" />
           <span className="memo__title">{memo.title}</span>
           <span className="memo__edit" aria-hidden="true">
             改

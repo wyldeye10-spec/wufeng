@@ -9,7 +9,7 @@ import { SectionBanner } from './components/SectionBanner'
 import { Toast } from './components/Toast'
 import { usePrefersReducedMotion } from './hooks/useEnvironment'
 import { useJournal } from './hooks/useJournal'
-import { createMemo, type Memo } from './lib/store'
+import { createMemo, type Memo, type MemoIcon } from './lib/store'
 import { clampChars } from './lib/text'
 
 type EditorState = { mode: 'new' } | { mode: 'edit'; memo: Memo }
@@ -205,10 +205,11 @@ export default function App() {
     return () => window.clearTimeout(timer)
   }, [erasingId, drop, reducedMotion])
 
-  const create = async (draft: { title: string; content: string }) => {
+  const create = async (draft: { title: string; content: string; icon: MemoIcon }) => {
     const memo = createMemo(
       clampChars(draft.title, 8).trim(),
       clampChars(draft.content, 50).trim(),
+      draft.icon,
     )
     await write(memo)
     setEditor(null)
@@ -218,13 +219,14 @@ export default function App() {
     setAnnouncement(`《${memo.title}》已记下。`)
   }
 
-  const update = async (draft: { title: string; content: string }) => {
+  const update = async (draft: { title: string; content: string; icon: MemoIcon }) => {
     if (!editor || editor.mode !== 'edit') return
     const current = items.find((item) => item.id === editor.memo.id) ?? editor.memo
     const next: Memo = {
       ...current,
       title: clampChars(draft.title, 8).trim(),
       content: clampChars(draft.content, 50).trim(),
+      icon: draft.icon,
     }
     await write(next)
     setEditor(null)

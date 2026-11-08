@@ -567,13 +567,14 @@ await test('导出卷宗 / JSON 结构与下载文件名', async () => {
   const archive = JSON.parse(await readFile(file, 'utf8'))
   assertEqual(archive.app, '无锋', '备份应用名')
   assertEqual(archive.format, 'wufeng-journal', '备份格式')
-  assertEqual(archive.version, 1, '备份版本')
+  assertEqual(archive.version, 2, '备份版本')
   assert(Array.isArray(archive.memos), '备份 memos 不是数组')
   assertEqual(archive.memos.length, 2, '备份记录数')
 
   const open = archive.memos.find((memo) => memo.title === '导出未竟')
   const done = archive.memos.find((memo) => memo.title === '导出已了')
   assert(open && open.done === false && open.completedAt === null, '未竟记录状态不正确')
+  assertEqual(open.icon, 'gold-sword', '默认印记')
   assert(
     done && done.done === true && typeof done.completedAt === 'number',
     '已了记录状态不正确',
@@ -599,13 +600,14 @@ await test('导入卷宗 / 取消 / 并入与同号覆盖 / 持久化 / 非法�
   const backup = {
     app: '无锋',
     format: 'wufeng-journal',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     memos: [
       {
         id: existing.id,
         title: '原有',
         content: '备份里的新文。',
+        icon: 'purple-sword',
         done: false,
         createdAt: existing.createdAt,
         completedAt: null,
@@ -614,6 +616,7 @@ await test('导入卷宗 / 取消 / 并入与同号覆盖 / 持久化 / 非法�
         id: 'import-open-1',
         title: '并入',
         content: '从备份并入的未竟。',
+        icon: 'white-scroll',
         done: false,
         createdAt: base + 1000,
         completedAt: null,
@@ -622,6 +625,7 @@ await test('导入卷宗 / 取消 / 并入与同号覆盖 / 持久化 / 非法�
         id: 'import-done-1',
         title: '旧印',
         content: '从备份带来的已了。',
+        icon: 'gold-sword',
         done: true,
         createdAt: base + 2000,
         completedAt: base + 3000,
@@ -667,6 +671,16 @@ await test('导入卷宗 / 取消 / 并入与同号覆盖 / 持久化 / 非法�
   assertArray(await titles(page, '.chapter--done'), ['旧印'], '并入后的已了列表')
   assert(await page.getByText('备份里的新文。').isVisible(), '同号旧记未被覆盖')
   assertEqual(await page.getByText('旧文留在卷中。').count(), 0, '旧正文不应残留')
+  assertEqual(
+    await page.locator('.memo', { hasText: '原有' }).locator('.memo-mark--purple-sword').count(),
+    1,
+    '同号旧记的印记未更新',
+  )
+  assertEqual(
+    await page.locator('.memo', { hasText: '并入' }).locator('.memo-mark--white-scroll').count(),
+    1,
+    '导入记录的印记错误',
+  )
 
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForFunction(
@@ -1025,6 +1039,122 @@ await test('楷体字族 / 标题大于正文 / 编辑卷纸同用楷体', async
   await page.getByRole('button', { name: '关闭编辑' }).click()
   await waitForComposerGone(page)
   await page.screenshot({ path: path.join(SHOTS, 'final-typography.png') })
+})
+
+// 19. 事项印记
+await test('事项印记 / 默认金剑 / 选择紫剑与白卷 / 刷新保留', async () => {
+  const { page } = await newPage({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  })
+  await addMemo(page, '默认', '默认用金剑。')
+  assertEqual(
+    await page.locator('.chapter--open .memo').first().locator('.memo-mark--gold-sword').count(),
+    1,
+    '默认印记不是金剑',
+  )
+
+  await page.getByRole('button', { name: '新增事项' }).click()
+  await page.waitForTimeout(450)
+  await page.getByRole('button', { name: '紫剑', exact: true }).click()
+  await page.getByLabel('事项标题').fill('紫电')
+  await page.getByLabel('事项内容').fill('紫剑一柄，悬于题左。')
+  await page.getByRole('button', { name: '记下' }).click()
+  await waitForComposerGone(page)
+  await page.waitForTimeout(400)
+
+  const purpleRow = page.locator('.memo', { hasText: '紫电' })
+  assertEqual(await purpleRow.locator('.memo-mark--purple-sword').count(), 1, '紫剑印记未显示')
+
+  await openEdit(page, '紫电')
+  await page.getByRole('button', { name: '白卷', exact: true }).click()
+  assertEqual(
+    await page.getByRole('button', { name: '白卷', exact: true }).getAttribute('aria-pressed'),
+    'true',
+    '白卷未显示选中态',
+  )
+  await page.getByRole('button', { name: '记下' }).click()
+  await waitForComposerGone(page)
+  await page.waitForTimeout(300)
+  assertEqual(
+    await page.locator('.memo', { hasText: '紫电' }).locator('.memo-mark--white-scroll').count(),
+    1,
+    '编辑后印记未改为白卷',
+  )
+
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.waitForFunction(
+    () => document.querySelector('.chapter--open .memo__title')?.textContent === '紫电',
+    undefined,
+    { timeout: 6000 },
+  )
+  assertEqual(
+    await page.locator('.memo', { hasText: '紫电' }).locator('.memo-mark--white-scroll').count(),
+    1,
+    '刷新后印记未保留',
+  )
+  await page.screenshot({ path: path.join(SHOTS, 'final-marks.png') })
+})
+
+// 20. 旧备份兼容
+await test('导入 v1 旧备份 / 缺失印记回退金剑', async () => {
+  const { page } = await newPage({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  })
+  const backup = {
+    app: '无锋',
+    format: 'wufeng-journal',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    memos: [
+      {
+        id: 'legacy-v1-1',
+        title: '旧卷',
+        content: '二点零一时的旧备份。',
+        done: false,
+        createdAt: Date.now(),
+        completedAt: null,
+      },
+    ],
+  }
+  const chooserPromise = page.waitForEvent('filechooser')
+  await page.getByRole('button', { name: '导入卷宗' }).click()
+  const chooser = await chooserPromise
+  await chooser.setFiles({
+    name: 'wufeng-v1-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup), 'utf8'),
+  })
+  const dialog = page.getByRole('alertdialog')
+  await dialog.waitFor({ state: 'visible' })
+  await dialog.getByRole('button', { name: '并入' }).click()
+  await dialog.waitFor({ state: 'detached' })
+  await page.waitForFunction(
+    () => document.querySelector('.chapter--open .memo__title')?.textContent === '旧卷',
+    undefined,
+    { timeout: 6000 },
+  )
+  assertEqual(
+    await page.locator('.memo', { hasText: '旧卷' }).locator('.memo-mark--gold-sword').count(),
+    1,
+    'v1 旧备份缺失印记未回退金剑',
+  )
+  await page.reload({ waitUntil: 'networkidle' })
+  await page.waitForFunction(
+    () => document.querySelector('.chapter--open .memo__title')?.textContent === '旧卷',
+    undefined,
+    { timeout: 6000 },
+  )
+  assertEqual(
+    await page.locator('.memo', { hasText: '旧卷' }).locator('.memo-mark--gold-sword').count(),
+    1,
+    '刷新后 v1 旧记录印记丢失',
+  )
 })
 
 // 汇总

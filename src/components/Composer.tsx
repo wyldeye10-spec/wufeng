@@ -2,15 +2,20 @@ import { useId, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { trapDialogKeys, useDialogFocus } from '../hooks/useDialogFocus'
 import { useBodyLock, useVisualViewport } from '../hooks/useEnvironment'
-import type { Memo } from '../lib/store'
+import {
+  DEFAULT_MEMO_ICON,
+  type Memo,
+  type MemoIcon,
+} from '../lib/store'
 import { clampChars, countChars, isBlank } from '../lib/text'
 import { ConfirmDialog } from './ConfirmDialog'
+import { MEMO_MARK_OPTIONS, MemoMark } from './MemoMark'
 
 interface ComposerProps {
   mode: 'new' | 'edit'
   memo?: Memo
   onClose: () => void
-  onSubmit: (draft: { title: string; content: string }) => Promise<void>
+  onSubmit: (draft: { title: string; content: string; icon: MemoIcon }) => Promise<void>
   onDelete?: () => Promise<Memo | null>
   onDeleteFinished?: (memo: Memo) => void
   reducedMotion: boolean
@@ -30,6 +35,7 @@ export function Composer({
 }: ComposerProps) {
   const [title, setTitle] = useState(memo?.title ?? '')
   const [content, setContent] = useState(memo?.content ?? '')
+  const [icon, setIcon] = useState<MemoIcon>(memo?.icon ?? DEFAULT_MEMO_ICON)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -41,6 +47,7 @@ export function Composer({
   const titleId = useId()
   const contentId = useId()
   const errorId = useId()
+  const markId = useId()
 
   useBodyLock(true)
   useVisualViewport(true)
@@ -87,7 +94,7 @@ export function Composer({
 
     setSaving(true)
     try {
-      await onSubmit({ title: nextTitle, content: nextContent })
+      await onSubmit({ title: nextTitle, content: nextContent, icon })
     } catch {
       setError('落笔未成，卷宗未能写入本机。')
       setSaving(false)
@@ -164,6 +171,29 @@ export function Composer({
 
             <form className="sheet__form" onSubmit={(event) => void submit(event)}>
               <div className="sheet__fields">
+                <div className="field field--mark">
+                  <div className="field__top">
+                    <span className="field__label" id={markId}>
+                      事项印记
+                    </span>
+                  </div>
+                  <div className="mark-picker" role="group" aria-labelledby={markId}>
+                    {MEMO_MARK_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`mark-choice${icon === option.value ? ' is-selected' : ''}`}
+                        aria-pressed={icon === option.value}
+                        onClick={() => setIcon(option.value)}
+                        disabled={saving}
+                      >
+                        <MemoMark icon={option.value} size={26} />
+                        <span className="mark-choice__label">{option.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="field">
                   <div className="field__top">
                     <label className="field__label" htmlFor={titleId}>

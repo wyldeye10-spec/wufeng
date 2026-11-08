@@ -1,20 +1,24 @@
 import { countChars, isBlank } from './text'
-import type { Memo } from './store'
+import {
+  DEFAULT_MEMO_ICON,
+  isMemoIcon,
+  type Memo,
+} from './store'
 
 /**
- * 卷宗备份格式：
+ * 卷宗备份格式（v2 增加事项印记）：
  * {
  *   app: "无锋",
  *   format: "wufeng-journal",
- *   version: 1,
+ *   version: 2,
  *   exportedAt: "2026-11-08T...",
  *   memos: Memo[]
  * }
  *
- * 导入同时接受旧式裸数组，方便从更早的脚本或手工备份恢复。
+ * 导入同时接受 v1 备份与旧式裸数组；缺失的印记回退为金剑。
  */
 export const ARCHIVE_FORMAT = 'wufeng-journal'
-export const ARCHIVE_VERSION = 1
+export const ARCHIVE_VERSION = 2
 export const MAX_IMPORT_MEMOS = 5000
 export const MAX_ARCHIVE_BYTES = 8 * 1024 * 1024
 
@@ -92,6 +96,12 @@ function readMemo(raw: unknown, index: number): Memo {
     throw new ArchiveError(`第 ${index + 1} 条记录缺少有效时间。`)
   }
 
+  const rawIcon = raw.icon
+  if (rawIcon !== undefined && !isMemoIcon(rawIcon)) {
+    throw new ArchiveError(`第 ${index + 1} 条记录的印记无法识别。`)
+  }
+  const icon = isMemoIcon(rawIcon) ? rawIcon : DEFAULT_MEMO_ICON
+
   const done = raw.done
   const completedAt =
     done && isFiniteTime(raw.completedAt) ? raw.completedAt : done ? raw.createdAt : null
@@ -100,6 +110,7 @@ function readMemo(raw: unknown, index: number): Memo {
     id,
     title,
     content,
+    icon,
     done,
     createdAt: raw.createdAt,
     completedAt,
@@ -140,7 +151,7 @@ export function parseArchive(text: string): ParsedArchive {
   if (!isRecord(parsed) || parsed.format !== ARCHIVE_FORMAT) {
     throw new ArchiveError('这不是无锋的卷宗备份。')
   }
-  if (parsed.version !== ARCHIVE_VERSION) {
+  if (parsed.version !== 1 && parsed.version !== ARCHIVE_VERSION) {
     throw new ArchiveError('备份格式版本不支持。')
   }
 
@@ -160,6 +171,7 @@ export function buildArchive(memos: Memo[]): JournalArchive {
       id: memo.id,
       title: memo.title,
       content: memo.content,
+      icon: memo.icon,
       done: memo.done,
       createdAt: memo.createdAt,
       completedAt: memo.completedAt,
@@ -179,6 +191,7 @@ function sameMemo(left: Memo, right: Memo): boolean {
     left.id === right.id &&
     left.title === right.title &&
     left.content === right.content &&
+    left.icon === right.icon &&
     left.done === right.done &&
     left.createdAt === right.createdAt &&
     left.completedAt === right.completedAt
