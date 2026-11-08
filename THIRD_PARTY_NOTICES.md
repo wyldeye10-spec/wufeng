@@ -17,7 +17,7 @@
 
 ### Noto Serif SC / Noto Serif CJK SC
 
-- 用途：事项标题、正文、界面标签。
+- 用途：卷宗界面标签、按钮、说明文字等；事项标题与正文自 1.0.3 起改用楷体。
 - 版权：© 2017–2023 Adobe (http://www.adobe.com/)
 - 商标：Noto is a trademark of Google Inc.
 - 许可：SIL Open Font License 1.1
@@ -25,6 +25,21 @@
 - 本项目使用 fontTools 固定字重并子集化（430 与 650 两档），覆盖 GB2312
   与界面字符，输出为 `src/assets/fonts/wufeng-serif.woff2` 与
   `wufeng-serif-bold.woff2`。子集仍受 OFL 1.1 约束。
+
+### LXGW WenKai GB / 霞鹜文楷 GB
+
+- 用途：未竟/已了事项的标题与正文、编辑卷纸的标题与正文。
+- 版权：Copyright 2022–2026 LXGW (https://github.com/lxgw/LxgwWenkaiGB)；
+  Copyright 2020 The Klee Project Authors
+  (https://github.com/fontworks-fonts/Klee)。Klee 是 Fontworks 的商标。
+- 许可：SIL Open Font License 1.1，含保留字体名「霞鹜」「霞鶩」「落霞孤鹜」
+  「落霞孤鶩」「LXGW」。
+- 来源：https://github.com/lxgw/LxgwWenkaiGB
+- 本项目仅做 Web Font 用途的子集化（覆盖 GB2312、界面字符与常用标点）并改名为
+  `Wufeng Kai`，输出为 `src/assets/fonts/wufeng-kai.woff2`；不修改字形设计，不将
+  子集作为可安装桌面字体单独分发，符合 OFL 1.1 的 Web Font 例外与保留名条款。
+- 本字体基于 FONTWORKS 的 Klee One 衍生，字形按中国大陆规范调整；子集仍受
+  OFL 1.1 约束。
 
 ### SIL Open Font License 1.1
 

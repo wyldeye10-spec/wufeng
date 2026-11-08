@@ -13,5 +13,13 @@
    文件：src/assets/fonts/wufeng-serif.woff2
          src/assets/fonts/wufeng-serif-bold.woff2
 
+3. LXGW WenKai GB (霞鹜文楷 GB)
+   Copyright 2022-2026 LXGW (https://github.com/lxgw/LxgwWenkaiGB)
+   Copyright 2020 The Klee Project Authors (https://github.com/fontworks-fonts/Klee)
+   保留字体名：霞鹜 / 霞鶩 / 落霞孤鹜 / 落霞孤鶩 / LXGW
+   文件：src/assets/fonts/wufeng-kai.woff2
+   说明：仅按 Web Font 用途子集化并改名为 Wufeng Kai，不修改字形设计，
+         不作为可安装桌面字体单独分发。
+
 完整许可文本：OFL-1.1.txt（同目录）。
 字体仅做了字重固定与字形子集化，未更改字形设计；子集仍受 OFL 1.1 约束。

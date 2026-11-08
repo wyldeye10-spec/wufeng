@@ -2,7 +2,7 @@
    无锋 · WUFENG
    一本存于本机的私人卷宗。
    视觉全部由手写 CSS / 内联 SVG 构成，无 UI 组件库默认样式。
-   字体：Ma Shan Zheng（标题） / Noto Serif SC（正文），SIL OFL 1.1。
+   字体：Ma Shan Zheng（展示） / Noto Serif SC（界面） / LXGW WenKai GB（事项楷体），SIL OFL 1.1。
    ========================================================= */
 
 @font-face {
@@ -25,6 +25,14 @@
   font-family: "Wufeng Serif";
   src: url("./assets/fonts/wufeng-serif-bold.woff2") format("woff2");
   font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Wufeng Kai";
+  src: url("./assets/fonts/wufeng-kai.woff2") format("woff2");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -53,6 +61,8 @@
   --font-display: "Wufeng Display", "STXingkai", "Xingkai SC", "STKaiti", "KaiTi", serif;
   --font-serif: "Wufeng Serif", "Songti SC", "STSong", "Noto Serif SC",
     "Source Han Serif SC", "SimSun", serif;
+  --font-kai: "Wufeng Kai", "Kaiti SC", "STKaiti", "KaiTi", "Kaiti", "TW-Kai",
+    serif;
 
   --page-max: 680px;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -678,10 +688,11 @@ textarea::placeholder {
   display: inline-block;
   overflow-wrap: anywhere;
   color: var(--paper);
-  font-size: clamp(17px, 4.2vw, 19px);
-  font-weight: 500;
-  letter-spacing: 0.13em;
-  line-height: 1.5;
+  font-family: var(--font-kai);
+  font-size: clamp(22px, 5vw, 24px);
+  font-weight: 400;
+  letter-spacing: 0.075em;
+  line-height: 1.4;
   transition: color 220ms ease;
 }
 
@@ -706,11 +717,12 @@ textarea::placeholder {
 
 .memo__content {
   display: block;
-  margin-top: 7px;
+  margin-top: 8px;
   overflow-wrap: anywhere;
   color: var(--text-dim);
-  font-size: clamp(14.5px, 3.7vw, 15px);
-  letter-spacing: 0.055em;
+  font-family: var(--font-kai);
+  font-size: clamp(15px, 3.8vw, 16px);
+  letter-spacing: 0.03em;
   line-height: 1.9;
   white-space: pre-wrap;
 }
@@ -1526,6 +1538,7 @@ textarea::placeholder {
   background: transparent;
   color: #191410;
   caret-color: var(--cinnabar);
+  font-family: var(--font-kai);
   transition: border-color 220ms ease, background-color 220ms ease;
 }
 
@@ -1536,15 +1549,15 @@ textarea::placeholder {
 
 .field__input::placeholder {
   color: rgba(25, 20, 16, 0.24);
-  font-family: var(--font-serif);
+  font-family: var(--font-kai);
 }
 
 .field__input--title {
   padding-top: 3px;
   padding-bottom: 8px;
-  font-size: clamp(25px, 6vw, 29px);
-  font-weight: 500;
-  letter-spacing: 0.07em;
+  font-size: clamp(28px, 6.3vw, 32px);
+  font-weight: 400;
+  letter-spacing: 0.05em;
   line-height: 1.35;
 }
 
@@ -1567,8 +1580,8 @@ textarea::placeholder {
     rgba(25, 20, 16, 0.15) 2em
   );
   background-position: 0 2px;
-  font-size: 16px;
-  letter-spacing: 0.045em;
+  font-size: 17px;
+  letter-spacing: 0.03em;
   line-height: 2;
   resize: none;
 }
@@ -2145,11 +2158,11 @@ textarea::placeholder {
   }
 
   .memo__title {
-    letter-spacing: 0.11em;
+    letter-spacing: 0.08em;
   }
 
   .memo__content {
-    margin-top: 6px;
+    margin-top: 7px;
     line-height: 1.9;
   }
 
@@ -2212,7 +2225,7 @@ textarea::placeholder {
   }
 
   .field__input--title {
-    font-size: 25px;
+    font-size: 28px;
   }
 
   .sheet__foot {
@@ -2259,11 +2272,11 @@ textarea::placeholder {
   }
 
   .memo__title {
-    font-size: 16px;
+    font-size: 21px;
   }
 
   .memo__content {
-    font-size: 14px;
+    font-size: 14.5px;
   }
 
   .memo {

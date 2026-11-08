@@ -3,11 +3,13 @@
 构建无锋的自托管字体子集（可复现，但生成物已提交，正常运行/构建无需 Python）。
 
 - 正文字体：Noto Serif SC Variable（SIL OFL 1.1）→ 覆盖 GB2312 + 界面字符 + 常用标点
+- 楷体：LXGW WenKai GB（SIL OFL 1.1）→ 覆盖 GB2312 + 界面字符 + 常用标点
 - 展示字体：Ma Shan Zheng（SIL OFL 1.1）→ 只保留界面用字，控制体积
 
 用法：
   python scripts/build-fonts.py --serif-source "C:/Windows/Fonts/NotoSerifSC-VF.ttf" \
-      --display-source assets-src/fonts/MaShanZheng-Regular.ttf
+      --display-source assets-src/fonts/MaShanZheng-Regular.ttf \
+      --kai-source assets-src/fonts/LXGWWenKaiGB-Regular.ttf
 """
 from __future__ import annotations
 
@@ -115,14 +117,22 @@ def main() -> None:
         default=str(ROOT / "assets-src" / "fonts" / "MaShanZheng-Regular.ttf"),
         help="Ma Shan Zheng Regular TTF",
     )
+    parser.add_argument(
+        "--kai-source",
+        default=str(ROOT / "assets-src" / "fonts" / "LXGWWenKaiGB-Regular.ttf"),
+        help="LXGW WenKai GB Regular TTF",
+    )
     args = parser.parse_args()
 
     serif_source = Path(args.serif_source)
     display_source = Path(args.display_source)
+    kai_source = Path(args.kai_source)
     if not serif_source.exists():
         raise SystemExit(f"缺少正文源字体：{serif_source}")
     if not display_source.exists():
         raise SystemExit(f"缺少展示源字体：{display_source}")
+    if not kai_source.exists():
+        raise SystemExit(f"缺少楷体源字体：{kai_source}")
 
     ui = collect_ui_text()
     ui_chars = unique(ui + UI_EXTRA)
@@ -150,10 +160,21 @@ def main() -> None:
         OUT / "wufeng-display.woff2",
         [],
     )
+    run_subset(
+        kai_source,
+        serif_chars,
+        OUT / "wufeng-kai.woff2",
+        [],
+    )
 
     from fontTools.ttLib import TTFont
 
-    for name in ("wufeng-serif.woff2", "wufeng-serif-bold.woff2", "wufeng-display.woff2"):
+    for name in (
+        "wufeng-serif.woff2",
+        "wufeng-serif-bold.woff2",
+        "wufeng-display.woff2",
+        "wufeng-kai.woff2",
+    ):
         font = TTFont(OUT / name)
         cmap = font.getBestCmap()
         missing = [char for char in ui_chars if ord(char) not in cmap]

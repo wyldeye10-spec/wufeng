@@ -1,5 +1,27 @@
 # 变更记录 / Changelog
 
+## 1.0.3 — 2026-11-08
+
+### 改动
+
+- 事项标题与正文统一换用自托管楷体「霞鹜文楷 GB / LXGW WenKai GB」，保留其温润的
+  楷书笔意，接近参考图中游戏内文字的观感；编辑卷纸的标题与正文同步换用同一字体。
+- 标题层级拉开：未竟/已了条目标题桌面 24px、移动端 22px，正文桌面 16px、移动端
+  15px；编辑卷纸标题 32px、移动端 28px，正文 17px。标题明显大于正文，同时保持窄屏
+  8 字标题不爆行。
+- 新增 `src/assets/fonts/wufeng-kai.woff2`：覆盖 GB2312、界面字符与常用标点的
+  WOFF2 子集（约 1.6 MB），随 Service Worker 一起离线缓存，不请求在线字体。
+- 字体许可与署名补充至 `THIRD_PARTY_NOTICES.md` 和 `public/licenses/fonts.txt`；
+  子集按 OFL 1.1 的 Web Font 例外处理，改名为 `Wufeng Kai`，不作为可安装桌面字体分发。
+- 端到端验收新增「楷体字族 / 标题大于正文 / 编辑卷纸同用楷体」用例，并扩展离线
+  字体断言；总数由 15 组增至 16 组。
+
+### 验收
+
+- 16 组端到端用例全部通过；详见 `tests/last-report.txt`。
+- 视觉截图已重拍：`screenshots/final-desktop.png`、`final-mobile.png`、
+  `final-composer.png`、`final-mobile-composer.png` 等。
+
 ## 1.0.2 — 2026-11-07
 
 ### 改动

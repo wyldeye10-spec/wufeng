@@ -4,7 +4,7 @@
 >
 > 未竟之事，记于纸上。已了之事，封于朱印。
 
-**当前版本：1.0.2** · [变更记录](CHANGELOG.md)
+**当前版本：1.0.3** · [变更记录](CHANGELOG.md)
 
 **在线版本**：https://wyldeye10-spec.github.io/wufeng/
 
@@ -37,6 +37,8 @@
 - 墨黑、烟灰、旧纸白、朱砂、暗铜的完整色彩系统，无霓虹、无彩虹渐变。
 - 卷首「无锋」为毛笔书法；章节标题置于手撕宣纸横幅上；事项以书简式细线排列，
   不用大圆角卡片。
+- 未竟/已了事项的标题与正文统一使用霞鹜文楷 GB，标题字号桌面 24px / 移动 22px，
+  正文 16px / 15px；编辑卷纸同步使用楷体，标题 32px、移动 28px，正文 17px。
 - 撕纸边缘、纸纹、朱印缺边与墨色不匀全部由手写 CSS / 内联 SVG 完成；没有使用
   游戏原画、Logo 或界面素材。
 - 完成事项时播放三段动效：560ms 的朱印落定 → 320ms 的未竟条目淡出消散 →
@@ -54,8 +56,8 @@
 | 构建 | Vite 7，静态资源相对路径，支持任意子目录部署 |
 | 持久化 | IndexedDB（首选）→ localStorage（兼容）→ 内存（最后手段，并明确警示） |
 | PWA | Web App Manifest、180/192/512/maskable 图标、构建后生成版本化 Service Worker |
-| 字体 | 自托管 Ma Shan Zheng / Noto Serif SC 子集（SIL OFL 1.1），不依赖在线字体 |
-| 测试 | Playwright Core + 本机 Chrome，15 组端到端验收 |
+| 字体 | 自托管 Ma Shan Zheng / Noto Serif SC / LXGW WenKai GB 子集（SIL OFL 1.1），不依赖在线字体 |
+| 测试 | Playwright Core + 本机 Chrome，16 组端到端验收 |
 
 PRD 将 Tailwind CSS 列为建议项。本项目刻意没有采用：整套界面需要独立的撕纸、
 印章、纸纹和排版语言，若用工具类默认风格反而会削弱设计。React、TypeScript、
@@ -96,10 +98,11 @@ wufeng/
 │  ├─ README.md                  # 版本存档与回退说明
 │  ├─ wufeng-1.0.0.zip           # 本机存档，gitignored
 │  ├─ wufeng-1.0.1.zip           # 本机存档，gitignored
-│  └─ wufeng-1.0.2.zip           # 本机存档，gitignored
+│  ├─ wufeng-1.0.2.zip           # 本机存档，gitignored
+│  └─ wufeng-1.0.3.zip           # 本机存档，gitignored
 ├─ screenshots/                  # 最终视觉证据
 ├─ dist/                         # 生产构建（可直接静态部署）
-├─ CHANGELOG.md                  # 1.0.1 / 1.0.0 变更记录
+├─ CHANGELOG.md                  # 1.0.3 / 1.0.2 / 1.0.1 / 1.0.0 变更记录
 ├─ THIRD_PARTY_NOTICES.md
 └─ 参考图/                       # 用户提供的设计参考，不进入构建
 ```
@@ -168,7 +171,8 @@ npm run test:e2e
 
 | 版本 | 内容 | 存档 |
 |---|---|---|
-| 1.0.2 | 当前版本：删除确认层/卷纸层淡出，条目再以墨迹消散 | Git tag `v1.0.2`、`releases/wufeng-1.0.2.zip` |
+| 1.0.3 | 当前版本：事项标题/正文改用楷体，标题层级加大 | Git tag `v1.0.3`、`releases/wufeng-1.0.3.zip` |
+| 1.0.2 | 删除确认层/卷纸层淡出，条目再以墨迹消散 | Git tag `v1.0.2`、`releases/wufeng-1.0.2.zip` |
 | 1.0.1 | 落印后未竟条目淡出、已了条目淡入 | Git tag `v1.0.1`、`releases/wufeng-1.0.1.zip` |
 | 1.0.0 | 初次交付：完整卷宗、朱印、PWA 与验收 | Git tag `v1.0.0`、`releases/wufeng-1.0.0.zip` |
 
@@ -247,7 +251,7 @@ server {
 
 ## 验收结果
 
-最近一次运行：**15 / 15 通过**。环境为本机 Windows + Chrome
+最近一次运行：**16 / 16 通过**。环境为本机 Windows + Chrome
 156.0.8078.80（headless）+ Vite Preview。完整输出见
 [tests/last-report.txt](tests/last-report.txt)，机器可读结果见
 [tests/report.json](tests/report.json)。
@@ -269,6 +273,7 @@ server {
 | 13 | 390 / 320 布局、460px 键盘高度 | PASS | 无横向滚动，保存区始终可见 |
 | 14 | `prefers-reduced-motion` | PASS | 完成流程缩短且可用 |
 | 15 | Escape、焦点归还、确认框焦点 | PASS | 焦点陷阱与默认「留下」 |
+| 16 | 楷体字族、标题大于正文、编辑卷纸同用楷体 | PASS | 断言 `Wufeng Kai` 已加载，标题≥正文+5px；编辑层差≥8px |
 
 **PWA 可安装性检查**：Chrome CDP `Page.getInstallabilityErrors` 只返回
 `in-incognito`（自动化使用无痕上下文），没有其他应用配置错误；`Page.getAppManifest`
@@ -303,13 +308,18 @@ server {
 - 1.0.2 的删除回归中发现点击「抹去」会立即卸载确认层与卷纸层，造成闪断。现在先把
   删除事务落库，再让确认层与卷纸层同步淡出 380ms；淡出结束后才开始条目墨迹消散
   300ms，最后移除条目并更新列表。
+- 1.0.3 换用楷体后，原 17/15px 的标题与正文在楷体字面下层级不够明显。标题上调为
+  桌面 24px / 移动 22px，正文 16px / 15px，并同步放大编辑卷纸标题，重新截图确认
+  标题明显大于正文，同时 8 字标题在 320px 窄屏不溢出。
 
 ## 字体与素材
 
 - 展示字体：Ma Shan Zheng，Copyright 2018 The MaShanZheng Project Authors，OFL 1.1。
 - 正文字体：Noto Serif SC，© 2017–2023 Adobe，OFL 1.1；Noto 是 Google Inc. 商标。
+- 楷体：LXGW WenKai GB（霞鹜文楷 GB），Copyright 2022–2026 LXGW，
+  Copyright 2020 The Klee Project Authors，OFL 1.1；事项标题、正文与编辑卷纸使用。
 - 字体均由本项目子集化并本地分发；不加载 Google Fonts 或其他在线资源。GB2312 之外的
-  生僻字自动回退到系统衬线字体。
+  生僻字自动回退到系统楷体/衬线字体。
 - 详细署名、许可与依赖许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 与
   [public/licenses/OFL-1.1.txt](public/licenses/OFL-1.1.txt)。
 - 除字体轮廓和文字外，无游戏素材；参考图仅作设计参考，不参与构建。
@@ -318,8 +328,10 @@ server {
 
 ```bash
 python -m pip install fonttools brotli
-# 将 MaShanZheng-Regular.ttf 放到 assets-src/fonts/
-python scripts/build-fonts.py --display-source assets-src/fonts/MaShanZheng-Regular.ttf --serif-source "C:/Windows/Fonts/NotoSerifSC-VF.ttf"
+# 将 MaShanZheng-Regular.ttf、LXGWWenKaiGB-Regular.ttf 放到 assets-src/fonts/
+python scripts/build-fonts.py --display-source assets-src/fonts/MaShanZheng-Regular.ttf \
+  --serif-source "C:/Windows/Fonts/NotoSerifSC-VF.ttf" \
+  --kai-source assets-src/fonts/LXGWWenKaiGB-Regular.ttf
 python scripts/extract-glyphs.py
 node scripts/build-icons.mjs
 ```
@@ -329,7 +341,8 @@ node scripts/build-icons.mjs
 - 这是纯本地应用，没有任何账号、云同步或多人能力；换设备不会自动带走卷宗。
 - 记录保存在浏览器站点数据中；清理站点数据、卸载图标、设备损坏均可能导致丢失。
 - 字体子集覆盖 GB2312 与界面字符；极生僻字使用系统回退字体，字形可能与正文略有差异。
-- Service Worker 首次缓存需要几秒；首次加载后、缓存完成前不要立即断网。
+- 楷体子集约 1.6 MB，Service Worker 首次缓存需要几秒；首次加载后、缓存完成前不要
+  立即断网。
 - 视觉依赖 `clip-path`、`backdrop-filter`、`dvh`、`visualViewport` 等现代能力；
   不支持时会降级为更朴素的版式，但增删改查不受影响。
 - 端到端测试绑定本机 Chrome；换环境请修改 `tests/e2e.mjs` 中的 `channel`。

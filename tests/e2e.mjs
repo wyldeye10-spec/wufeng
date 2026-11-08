@@ -588,6 +588,10 @@ await test('PWA 清单 / 图标 / 离线重载', async () => {
   }
   await page.waitForTimeout(400)
   assert(await page.evaluate(() => document.fonts.check('16px "Wufeng Serif"')), '在线字体未加载')
+  assert(
+    await page.evaluate(() => document.fonts.check('20px "Wufeng Kai"', '离线试记')),
+    '在线楷体未加载',
+  )
 
   const cdp = await context.newCDPSession(page)
   await cdp.send('Page.enable')
@@ -622,10 +626,13 @@ await test('PWA 清单 / 图标 / 离线重载', async () => {
   )
   assert(await page.getByText('断网之后，此卷仍在。').isVisible(), '离线重载后内容丢失')
   const offlineFont = await page.evaluate(async () => {
-    const faces = await document.fonts.load('16px "Wufeng Serif"', '断网之后')
+    const serifFaces = await document.fonts.load('16px "Wufeng Serif"', '断网之后')
+    const kaiFaces = await document.fonts.load('20px "Wufeng Kai"', '离线试记')
     return {
-      faces: faces.length,
-      check: document.fonts.check('16px "Wufeng Serif"'),
+      faces: serifFaces.length + kaiFaces.length,
+      check:
+        document.fonts.check('16px "Wufeng Serif"') &&
+        document.fonts.check('20px "Wufeng Kai"', '离线试记'),
       status: document.fonts.status,
     }
   })
@@ -813,6 +820,58 @@ await test('Escape 关闭 / 焦点归还 / 确认框焦点', async () => {
   await page.keyboard.press('Escape')
   await dialog.waitFor({ state: 'detached' })
   assert(await page.locator('.sheet').isVisible(), 'Escape 应只关闭确认框')
+})
+
+// 16. 楷体与标题层级
+await test('楷体字族 / 标题大于正文 / 编辑卷纸同用楷体', async () => {
+  const { page } = await newPage({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  })
+  await addMemo(page, '楷体试记', '正文与标题同用一档楷体，标题略大。')
+  const metrics = await page.locator('.chapter--open .memo').first().evaluate((node) => {
+    const title = getComputedStyle(node.querySelector('.memo__title'))
+    const content = getComputedStyle(node.querySelector('.memo__content'))
+    return {
+      titleFamily: title.fontFamily,
+      contentFamily: content.fontFamily,
+      titleSize: Number.parseFloat(title.fontSize),
+      contentSize: Number.parseFloat(content.fontSize),
+      titleWeight: title.fontWeight,
+      contentWeight: content.fontWeight,
+    }
+  })
+  assert(metrics.titleFamily.includes('Wufeng Kai'), `标题未使用楷体：${metrics.titleFamily}`)
+  assert(metrics.contentFamily.includes('Wufeng Kai'), `正文未使用楷体：${metrics.contentFamily}`)
+  assert(
+    metrics.titleSize >= metrics.contentSize + 5,
+    `标题未明显大于正文：标题 ${metrics.titleSize}px / 正文 ${metrics.contentSize}px`,
+  )
+  assertEqual(metrics.titleWeight, '400', '楷体标题字重')
+  assertEqual(metrics.contentWeight, '400', '楷体正文字重')
+
+  await openEdit(page, '楷体试记')
+  const editor = await page.evaluate(() => {
+    const title = getComputedStyle(document.querySelector('.field__input--title'))
+    const content = getComputedStyle(document.querySelector('.field__input--content'))
+    return {
+      titleFamily: title.fontFamily,
+      contentFamily: content.fontFamily,
+      titleSize: Number.parseFloat(title.fontSize),
+      contentSize: Number.parseFloat(content.fontSize),
+    }
+  })
+  assert(editor.titleFamily.includes('Wufeng Kai'), `编辑标题未使用楷体：${editor.titleFamily}`)
+  assert(editor.contentFamily.includes('Wufeng Kai'), `编辑正文未使用楷体：${editor.contentFamily}`)
+  assert(
+    editor.titleSize >= editor.contentSize + 8,
+    `编辑标题未明显大于正文：标题 ${editor.titleSize}px / 正文 ${editor.contentSize}px`,
+  )
+  await page.getByRole('button', { name: '关闭编辑' }).click()
+  await waitForComposerGone(page)
+  await page.screenshot({ path: path.join(SHOTS, 'final-typography.png') })
 })
 
 // 汇总
