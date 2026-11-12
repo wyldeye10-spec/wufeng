@@ -1481,8 +1481,8 @@ textarea::placeholder {
 
 .studio__kicker {
   color: var(--copper);
-  font-size: 9px;
-  letter-spacing: 0.38em;
+  font-size: 10.5px;
+  letter-spacing: 0.34em;
   line-height: 1;
 }
 
@@ -1497,12 +1497,12 @@ textarea::placeholder {
 }
 
 .studio__note {
-  max-width: 36em;
+  max-width: 37em;
   margin-top: 13px;
   color: var(--text-faint);
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  line-height: 1.95;
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  line-height: 1.9;
 }
 
 .studio__bar {
@@ -1516,28 +1516,25 @@ textarea::placeholder {
 
 .studio__new {
   display: inline-flex;
-  min-height: 46px;
+  min-height: 48px;
   align-items: center;
   gap: 10px;
   padding: 0 19px;
-  border: 1px solid rgba(158, 41, 37, 0.58);
-  background:
-    radial-gradient(120% 120% at 24% 14%, rgba(255, 255, 255, 0.07), transparent 52%),
-    linear-gradient(150deg, rgba(158, 41, 37, 0.24), rgba(18, 16, 14, 0.55));
+  border: 1px solid rgba(158, 41, 37, 0.62);
+  background-color: #2a1210;
   color: var(--paper);
-  font-size: 12px;
-  letter-spacing: 0.24em;
+  font-size: 13.5px;
+  letter-spacing: 0.22em;
   transition:
     border-color 200ms ease,
     background-color 200ms ease,
-    transform 140ms ease,
-    filter 200ms ease;
+    transform 140ms ease;
 }
 
 .studio__new:hover,
 .studio__new:focus-visible {
   border-color: var(--cinnabar-hi);
-  filter: brightness(1.08);
+  background-color: #351614;
 }
 
 .studio__new:active {
@@ -1545,7 +1542,7 @@ textarea::placeholder {
 }
 
 .studio__new.is-open {
-  background-color: rgba(158, 41, 37, 0.16);
+  background-color: #341513;
 }
 
 .studio__new-plus {
@@ -1582,11 +1579,11 @@ textarea::placeholder {
 }
 
 .studio__sort-button {
-  height: 36px;
-  padding: 0 13px;
+  height: 38px;
+  padding: 0 14px;
   color: var(--text-faint);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
   transition: color 200ms ease, background-color 200ms ease;
 }
 
@@ -1604,10 +1601,10 @@ textarea::placeholder {
 }
 
 .studio__sort-note {
-  margin-top: 9px;
+  margin-top: 10px;
   color: var(--text-faint);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.1em;
   text-align: right;
 }
 
@@ -1674,7 +1671,7 @@ textarea::placeholder {
 
 .studio__new-kicker {
   color: rgba(25, 20, 16, 0.48);
-  font-size: 9px;
+  font-size: 10.5px;
   letter-spacing: 0.34em;
   line-height: 1;
 }
@@ -1698,7 +1695,7 @@ textarea::placeholder {
   border: 1px solid rgba(25, 20, 16, 0.18);
   color: rgba(25, 20, 16, 0.62);
   font-family: var(--font-display);
-  font-size: 21px;
+  font-size: 22px;
   transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
 }
 
@@ -1721,7 +1718,7 @@ textarea::placeholder {
 
 .kind-picker__hint {
   color: var(--copper);
-  font-size: 9px;
+  font-size: 10.5px;
   letter-spacing: 0.3em;
   line-height: 1;
 }
@@ -1761,16 +1758,21 @@ textarea::placeholder {
 }
 
 .kind-choice__label {
-  font-size: 11px;
-  letter-spacing: 0.26em;
+  font-size: 12.5px;
+  letter-spacing: 0.24em;
   line-height: 1;
-  padding-left: 0.26em;
+  padding-left: 0.24em;
+}
+
+.kind-choice .memo-mark {
+  width: 34px;
+  height: 34px;
 }
 
 .studio__empty {
   margin: 58px 0 26px;
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 14.5px;
   letter-spacing: 0.22em;
   line-height: 1.9;
   text-align: center;
@@ -1794,17 +1796,17 @@ textarea::placeholder {
 .stack__head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 11px;
+  gap: 11px;
+  margin-bottom: 12px;
   color: var(--text-dim);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.16em;
   line-height: 1;
 }
 
 .stack__head .memo-mark {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   flex: 0 0 auto;
 }
 
@@ -1815,15 +1817,15 @@ textarea::placeholder {
 
 .stack__count {
   color: var(--text-faint);
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.1em;
 }
 
 .stack__now {
   margin-left: auto;
   color: var(--cinnabar-hi);
-  font-size: 9px;
-  letter-spacing: 0.24em;
+  font-size: 11px;
+  letter-spacing: 0.2em;
 }
 
 .stack__now.is-ended {
@@ -1838,11 +1840,11 @@ textarea::placeholder {
 
 .card {
   position: relative;
-  border: 1px solid rgba(120, 100, 73, 0.3);
-  background:
-    radial-gradient(120% 100% at 18% 0%, rgba(120, 100, 73, 0.13), transparent 56%),
-    linear-gradient(162deg, #1a1713 0%, #12100d 58%, #0d0b0a 100%);
-  box-shadow: 0 -7px 18px rgba(0, 0, 0, 0.34);
+  border: 1px solid rgba(120, 100, 73, 0.28);
+  background-color: #15120f;
+  box-shadow:
+    0 -8px 20px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(216, 209, 195, 0.035);
   transform: rotate(calc((var(--i) - 1) * 0.3deg)) translateX(calc(var(--i) * 1.3px));
   transition:
     margin-top 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -1866,10 +1868,6 @@ textarea::placeholder {
   transform: none;
 }
 
-.card:hover {
-  border-color: rgba(120, 100, 73, 0.52);
-}
-
 .card.is-current {
   border-color: rgba(120, 100, 73, 0.46);
 }
@@ -1887,9 +1885,25 @@ textarea::placeholder {
 }
 
 .card.is-done {
-  background:
-    linear-gradient(162deg, rgba(26, 23, 19, 0.72) 0%, rgba(16, 14, 12, 0.82) 100%);
+  background-color: #100e0b;
   border-color: rgba(120, 100, 73, 0.2);
+}
+
+.card:not(.is-editing):not(.is-dragging):hover,
+.card:not(.is-editing):not(.is-dragging):focus-within {
+  z-index: 3;
+  border-color: rgba(223, 192, 120, 0.68);
+  background-color: #201a15;
+  box-shadow:
+    inset 2px 0 0 rgba(223, 192, 120, 0.82),
+    0 0 0 1px rgba(223, 192, 120, 0.14),
+    0 10px 26px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(216, 209, 195, 0.06);
+}
+
+.card:not(.is-editing):not(.is-dragging):not(.is-done):hover .card__title,
+.card:not(.is-editing):not(.is-dragging):not(.is-done):focus-within .card__title {
+  color: var(--paper-hi);
 }
 
 .card.is-dragging {
@@ -1901,19 +1915,19 @@ textarea::placeholder {
 
 .card__top {
   display: flex;
-  min-height: 55px;
+  min-height: 60px;
   align-items: center;
-  gap: 10px;
-  padding: 11px 12px 11px 14px;
+  gap: 11px;
+  padding: 12px 14px 12px 16px;
 }
 
 .card__step {
   flex: 0 0 auto;
-  min-width: 31px;
-  padding: 3px 4px;
+  min-width: 36px;
+  padding: 4px 5px;
   border: 1px solid rgba(120, 100, 73, 0.34);
   color: var(--copper);
-  font-size: 9px;
+  font-size: 10.5px;
   letter-spacing: 0.1em;
   line-height: 1.2;
   text-align: center;
@@ -1934,8 +1948,8 @@ textarea::placeholder {
   overflow-wrap: anywhere;
   color: var(--paper);
   font-family: var(--font-kai);
-  font-size: 17px;
-  letter-spacing: 0.055em;
+  font-size: 19px;
+  letter-spacing: 0.05em;
   line-height: 1.4;
   transition: color 200ms ease;
 }
@@ -1949,8 +1963,8 @@ textarea::placeholder {
   flex: 0 0 auto;
   margin-left: auto;
   color: var(--text-faint);
-  font-size: 9px;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  letter-spacing: 0.16em;
   line-height: 1;
 }
 
@@ -1972,8 +1986,8 @@ textarea::placeholder {
 
 .card__drag {
   display: grid;
-  width: 32px;
-  height: 36px;
+  width: 36px;
+  height: 40px;
   flex: 0 0 auto;
   place-items: center;
   color: var(--copper);
@@ -2000,11 +2014,11 @@ textarea::placeholder {
 .card__content {
   display: none;
   margin: 0;
-  padding: 0 15px 15px 55px;
+  padding: 0 17px 17px 58px;
   color: var(--text-dim);
   font-family: var(--font-kai);
-  font-size: 14.5px;
-  letter-spacing: 0.025em;
+  font-size: 16px;
+  letter-spacing: 0.02em;
   line-height: 1.85;
   white-space: pre-wrap;
 }
@@ -2029,7 +2043,7 @@ textarea::placeholder {
 
 .card__editor-kicker {
   color: rgba(25, 20, 16, 0.48);
-  font-size: 9px;
+  font-size: 10.5px;
   letter-spacing: 0.28em;
   line-height: 1;
 }
@@ -2038,7 +2052,7 @@ textarea::placeholder {
   margin-top: 6px;
   color: #17130f;
   font-family: var(--font-display);
-  font-size: 29px;
+  font-size: 31px;
   font-weight: 400;
   letter-spacing: 0.1em;
   line-height: 1;
@@ -2046,14 +2060,14 @@ textarea::placeholder {
 
 .card__editor-close {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   flex: 0 0 auto;
   place-items: center;
   border: 1px solid rgba(25, 20, 16, 0.18);
   color: rgba(25, 20, 16, 0.62);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 21px;
   transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
 }
 
@@ -2085,17 +2099,17 @@ textarea::placeholder {
 .card__order {
   margin-right: 2px;
   color: rgba(25, 20, 16, 0.5);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
 }
 
 .task-tool {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 0 13px;
   border: 1px solid rgba(25, 20, 16, 0.2);
   color: rgba(25, 20, 16, 0.74);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
   transition:
     border-color 200ms ease,
     background-color 200ms ease,
@@ -2120,8 +2134,8 @@ textarea::placeholder {
 .card__sealed-note {
   margin-top: 12px;
   color: rgba(25, 20, 16, 0.42);
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
   line-height: 1.8;
 }
 
@@ -2134,8 +2148,8 @@ textarea::placeholder {
 .card__follow-title {
   margin-bottom: 13px;
   color: rgba(25, 20, 16, 0.6);
-  font-size: 11px;
-  letter-spacing: 0.14em;
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
   line-height: 1.6;
 }
 
@@ -2214,14 +2228,14 @@ textarea::placeholder {
 }
 
 .task-form__icon .memo-mark {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
 }
 
 .task-form__kind {
   color: #191410;
   font-family: var(--font-kai);
-  font-size: 21px;
+  font-size: 23px;
   letter-spacing: 0.14em;
   line-height: 1;
 }
@@ -2229,8 +2243,8 @@ textarea::placeholder {
 .task-form__kind-note {
   margin-left: auto;
   color: rgba(25, 20, 16, 0.42);
-  font-size: 9px;
-  letter-spacing: 0.26em;
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
   line-height: 1;
 }
 
@@ -2254,8 +2268,8 @@ textarea::placeholder {
 .task-form__label {
   display: block;
   color: rgba(25, 20, 16, 0.62);
-  font-size: 11px;
-  letter-spacing: 0.3em;
+  font-size: 12.5px;
+  letter-spacing: 0.28em;
   line-height: 1;
 }
 
@@ -2265,9 +2279,9 @@ textarea::placeholder {
 
 .task-form__count {
   color: rgba(25, 20, 16, 0.46);
-  font-size: 10px;
+  font-size: 11.5px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .task-form__count.is-limit {
@@ -2301,13 +2315,13 @@ textarea::placeholder {
 .task-form__input--title {
   padding-top: 3px;
   padding-bottom: 8px;
-  font-size: clamp(25px, 5.8vw, 29px);
+  font-size: clamp(27px, 6vw, 31px);
   letter-spacing: 0.05em;
   line-height: 1.32;
 }
 
 .task-form__input--title::placeholder {
-  font-size: 19px;
+  font-size: 20px;
   letter-spacing: 0.12em;
 }
 
@@ -2323,8 +2337,8 @@ textarea::placeholder {
     rgba(25, 20, 16, 0.15) 2em
   );
   background-position: 0 2px;
-  font-size: 16px;
-  letter-spacing: 0.03em;
+  font-size: 17px;
+  letter-spacing: 0.02em;
   line-height: 2;
   resize: none;
 }
@@ -2337,7 +2351,7 @@ textarea::placeholder {
   min-height: 17px;
   margin: -3px 0 0;
   color: var(--cinnabar-ink);
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   line-height: 1.5;
   opacity: 0;
@@ -2356,12 +2370,12 @@ textarea::placeholder {
 }
 
 .task-form__cancel {
-  min-width: 56px;
+  min-width: 58px;
   height: 44px;
   border: 1px solid rgba(25, 20, 16, 0.2);
   color: rgba(25, 20, 16, 0.62);
-  font-size: 12px;
-  letter-spacing: 0.2em;
+  font-size: 13.5px;
+  letter-spacing: 0.18em;
   transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
 }
 
@@ -2388,9 +2402,9 @@ textarea::placeholder {
     18% 96%, 2% 91%, 0% 70%, 2% 48%, 0% 25%
   );
   color: #f1e7d2;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.28em;
   transition: filter 200ms ease, transform 140ms ease;
 }
 
@@ -2436,11 +2450,11 @@ textarea::placeholder {
 .mark-choice {
   position: relative;
   display: flex;
-  width: 56px;
+  width: 58px;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 7px 0 6px;
+  padding: 8px 0 7px;
   border: 1px solid rgba(25, 20, 16, 0.12);
   background: transparent;
   color: rgba(25, 20, 16, 0.55);
@@ -2476,13 +2490,13 @@ textarea::placeholder {
 }
 
 .mark-choice .memo-mark {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
 }
 
 .mark-choice__label {
-  font-size: 9px;
-  letter-spacing: 0.12em;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
   line-height: 1;
 }
 
@@ -2986,7 +3000,7 @@ textarea::placeholder {
   }
 
   .studio__note {
-    font-size: 10.5px;
+    font-size: 12px;
   }
 
   .studio__bar {
@@ -3006,10 +3020,10 @@ textarea::placeholder {
   }
 
   .studio__sort-button {
-    height: 38px;
+    height: 40px;
     flex: 1 1 0;
     padding: 0 8px;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
   }
 
   .studio__sort-note {
@@ -3030,8 +3044,8 @@ textarea::placeholder {
   }
 
   .kind-choice__label {
-    font-size: 10px;
-    letter-spacing: 0.18em;
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
   }
 
   .studio__new-sheet {
@@ -3047,22 +3061,22 @@ textarea::placeholder {
   }
 
   .card__top {
-    min-height: 52px;
-    gap: 8px;
-    padding: 10px 10px 10px 12px;
+    min-height: 57px;
+    gap: 9px;
+    padding: 11px 12px 11px 13px;
   }
 
   .card__title {
-    font-size: 16.5px;
+    font-size: 18.5px;
   }
 
   .card__drag {
-    width: 30px;
+    width: 32px;
   }
 
   .card__content {
-    padding: 0 12px 13px;
-    font-size: 14px;
+    padding: 0 14px 15px;
+    font-size: 15.5px;
   }
 
   .card__editor {
@@ -3070,7 +3084,7 @@ textarea::placeholder {
   }
 
   .card__editor-title {
-    font-size: 26px;
+    font-size: 28px;
   }
 
   .card__tools {
@@ -3082,17 +3096,17 @@ textarea::placeholder {
   }
 
   .task-tool {
-    min-height: 36px;
-    padding: 0 10px;
-    font-size: 10.5px;
+    min-height: 38px;
+    padding: 0 11px;
+    font-size: 12px;
   }
 
   .task-form__input--title {
-    font-size: 24px;
+    font-size: 26px;
   }
 
   .task-form__input--content {
-    min-height: 88px;
+    min-height: 96px;
   }
 
   .toast {
@@ -3207,13 +3221,13 @@ textarea::placeholder {
   }
 
   .kind-choice .memo-mark {
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
   }
 
   .card__step {
-    min-width: 27px;
-    font-size: 8px;
+    min-width: 31px;
+    font-size: 10px;
   }
 
   .card__state {
@@ -3221,7 +3235,7 @@ textarea::placeholder {
   }
 
   .task-form__error {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 

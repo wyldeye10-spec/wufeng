@@ -72,6 +72,20 @@ await create(d, '收集', '残页三张', '散在城隍庙、药铺与废宅里�
 await d.waitForTimeout(300)
 await d.screenshot({ path: 'screenshots/final-studio.png', fullPage: true })
 
+await d.locator('.card__open', { hasText: '艄公之死' }).hover()
+await d.waitForTimeout(260)
+await d.screenshot({ path: 'screenshots/final-studio-hover.png' })
+await d.mouse.move(8, 8)
+await d.waitForTimeout(200)
+
+await d.locator('.card__open', { hasText: '夜渡寒江' }).click()
+await d.locator('.card.is-editing').waitFor({ state: 'visible' })
+await d.locator('.card.is-editing').scrollIntoViewIfNeeded()
+await d.waitForTimeout(420)
+await d.screenshot({ path: 'screenshots/final-studio-edit.png' })
+await d.locator('.card__editor-close').click()
+await d.waitForTimeout(250)
+
 await d.getByRole('button', { name: '返回卷宗' }).click()
 await d.waitForTimeout(500)
 await d.getByRole('button', { name: '盖印完成：夜渡寒江' }).click()
@@ -103,12 +117,38 @@ await create(m, '轶闻', '酒楼听雨', '城南酒楼的说书人，知道二�
 await create(m, '收集', '残页三张', '散在城隍庙、药铺与废宅里的残页。')
 await m.waitForTimeout(300)
 await m.screenshot({ path: 'screenshots/final-mobile-studio.png', fullPage: true })
+
+await m.locator('.card__open', { hasText: '夜渡寒江' }).click()
+await m.locator('.card.is-editing').waitFor({ state: 'visible' })
+await m.locator('.card.is-editing').scrollIntoViewIfNeeded()
+await m.waitForTimeout(420)
+await m.screenshot({ path: 'screenshots/final-mobile-studio-edit.png' })
+await m.locator('.card__editor-close').click()
+await m.waitForTimeout(250)
+
 await m.getByRole('button', { name: '返回卷宗' }).click()
 await m.waitForTimeout(600)
 await blur(m)
 await m.evaluate(() => window.scrollTo(0, 0))
 await m.waitForTimeout(250)
 await m.screenshot({ path: 'screenshots/final-mobile.png' })
+
+const narrow = await context({
+  viewport: { width: 320, height: 760 },
+  deviceScaleFactor: 2,
+  isMobile: true,
+  hasTouch: true,
+})
+const n = narrow.page
+await n.addStyleTag({ content: '.add-seal { display: none !important; }' })
+await n.getByRole('button', { name: '编辑任务' }).click()
+await n.waitForSelector('.studio')
+await create(n, '故事', '夜渡寒江', '孤舟一盏灯，先寻渡口的老艄公。')
+await create(n, '收集', '残页三张', '散在城隍庙、药铺与废宅里的残页。')
+await n.waitForTimeout(300)
+await n.evaluate(() => window.scrollTo(0, 0))
+await n.waitForTimeout(200)
+await n.screenshot({ path: 'screenshots/final-mobile-320-studio.png' })
 
 await browser.close()
 console.log('final screenshots done')
