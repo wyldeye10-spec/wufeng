@@ -1,18 +1,27 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AddSeal } from './components/AddSeal'
 import { ArchiveTools } from './components/ArchiveTools'
-import { Composer } from './components/Composer'
+import { ConfirmDialog } from './components/ConfirmDialog'
 import { EmptyState } from './components/EmptyState'
 import { Masthead } from './components/Masthead'
 import { MemoRow } from './components/MemoRow'
 import { SectionBanner } from './components/SectionBanner'
+import { Studio } from './components/Studio'
 import { Toast } from './components/Toast'
-import { usePrefersReducedMotion } from './hooks/useEnvironment'
+import type { TaskDraft } from './components/TaskForm'
+import { usePrefersReducedMotion, useBodyLock } from './hooks/useEnvironment'
 import { useJournal } from './hooks/useJournal'
-import { createMemo, type Memo, type MemoIcon } from './lib/store'
+import {
+  buildChains,
+  CATEGORY_ORDER,
+  categoryLabel,
+  nextTask,
+  sortChains,
+  stepInfo,
+  stepLabel,
+} from './lib/chain'
+import { createMemo, type Memo } from './lib/store'
 import { clampChars } from './lib/text'
-
-type EditorState = { mode: 'new' } | { mode: 'edit'; memo: Memo }
 
 const wait = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -21,12 +30,11 @@ const wait = (ms: number) =>
 
 function focusMemoControl(id: string, selector: string): void {
   window.setTimeout(() => {
-    if (document.querySelector('.composer')) return
     const row = Array.from(document.querySelectorAll<HTMLElement>('.memo')).find(
       (element) => element.dataset.id === id,
     )
     row?.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true })
-  }, 60)
+  }, 80)
 }
 
 interface RowSnapshot {
@@ -69,16 +77,19 @@ function measureLayout(): LayoutSnapshot {
 export default function App() {
   const journal = useJournal()
   const reducedMotion = usePrefersReducedMotion()
-  const [editor, setEditor] = useState<EditorState | null>(null)
-  const [enteringId, setEnteringId] = useState<string | null>(null)
-  const [erasingId, setErasingId] = useState<string | null>(null)
-  const [leavingId, setLeavingId] = useState<string | null>(null)
+  const [studioOpen, setStudioOpen] = useState(false)
+  const [seedNew, setSeedNew] = useState(false)
+  const [completing, setCompleting] = useState<Memo | null>(null)
+  const [completingBusy, setCompletingBusy] = useState(false)
+  const [sinkingId, setSinkingId] = useState<string | null>(null)
+  const [risingId, setRisingId] = useState<string | null>(null)
   const [arrivingDoneId, setArrivingDoneId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const toastId = useRef(0)
   const noticeShown = useRef(false)
   const flipSnapshot = useRef<LayoutSnapshot | null>(null)
+  useBodyLock(completing !== null)
 
   const notify = (message: string) => {
     toastId.current += 1
@@ -88,8 +99,31 @@ export default function App() {
   const { ready, mode, loadError, items, write, writeMany, erase, insert, merge, replace, drop } =
     journal
 
-  const open = useMemo(() => items.filter((memo) => !memo.done), [items])
-  const done = useMemo(() => items.filter((memo) => memo.done), [items])
+  const chains = useMemo(() => buildChains(items), [items])
+  const openChains = useMemo(
+    () => sortChains(chains.filter((chain) => chain.head), 'category'),
+    [chains],
+  )
+  const openGroups = useMemo(
+    () =>
+      CATEGORY_ORDER.map((icon) => ({
+        icon,
+        chains: openChains.filter((chain) => chain.category === icon),
+      })).filter((group) => group.chains.length > 0),
+    [openChains],
+  )
+  const done = useMemo(
+    () =>
+      items
+        .filter((memo) => memo.done)
+        .sort(
+          (left, right) =>
+            (right.completedAt ?? 0) - (left.completedAt ?? 0) ||
+            right.createdAt - left.createdAt ||
+            left.id.localeCompare(right.id),
+        ),
+    [items],
+  )
 
   useEffect(() => {
     if (!ready || loadError || noticeShown.current) return
@@ -102,35 +136,20 @@ export default function App() {
   }, [ready, mode, loadError])
 
   useEffect(() => {
-    if (!enteringId) return
-    const timer = window.setTimeout(() => {
-      setEnteringId((current) => (current === enteringId ? null : current))
-    }, 900)
-    return () => window.clearTimeout(timer)
-  }, [enteringId])
-
-  useEffect(() => {
-    if (!enteringId) return
-    const timer = window.setTimeout(() => {
-      const row = Array.from(document.querySelectorAll<HTMLElement>('.memo')).find(
-        (element) => element.dataset.id === enteringId,
-      )
-      row?.scrollIntoView({
-        behavior: reducedMotion ? 'auto' : 'smooth',
-        block: 'center',
-      })
-      row?.querySelector<HTMLElement>('.memo__body')?.focus({ preventScroll: true })
-    }, 140)
-    return () => window.clearTimeout(timer)
-  }, [enteringId, reducedMotion])
-
-  useEffect(() => {
     if (!arrivingDoneId) return
     const timer = window.setTimeout(() => {
       setArrivingDoneId((current) => (current === arrivingDoneId ? null : current))
     }, 1000)
     return () => window.clearTimeout(timer)
   }, [arrivingDoneId])
+
+  useEffect(() => {
+    if (!risingId) return
+    const timer = window.setTimeout(() => {
+      setRisingId((current) => (current === risingId ? null : current))
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [risingId])
 
   const snapshot = () => {
     flipSnapshot.current = measureLayout()
@@ -186,115 +205,167 @@ export default function App() {
         },
       )
     })
-    // 仅当条目重新分布时执行位移动画。
   }, [items, reducedMotion])
 
-  useEffect(() => {
-    if (!erasingId) return
-    const timer = window.setTimeout(
-      () => {
-        snapshot()
-        drop(erasingId)
-        setErasingId(null)
-        window.setTimeout(() => {
-          document.querySelector<HTMLElement>('.add-seal')?.focus({ preventScroll: true })
-        }, 60)
-      },
-      reducedMotion ? 0 : 300,
-    )
-    return () => window.clearTimeout(timer)
-  }, [erasingId, drop, reducedMotion])
-
-  const create = async (draft: { title: string; content: string; icon: MemoIcon }) => {
+  const createTask = async (draft: TaskDraft) => {
     const memo = createMemo(
       clampChars(draft.title, 8).trim(),
       clampChars(draft.content, 50).trim(),
       draft.icon,
     )
     await write(memo)
-    setEditor(null)
     snapshot()
     insert(memo)
-    setEnteringId(memo.id)
     setAnnouncement(`《${memo.title}》已记下。`)
+    return memo
   }
 
-  const update = async (draft: { title: string; content: string; icon: MemoIcon }) => {
-    if (!editor || editor.mode !== 'edit') return
-    const current = items.find((item) => item.id === editor.memo.id) ?? editor.memo
+  const updateTask = async (id: string, draft: TaskDraft) => {
+    const current = items.find((item) => item.id === id)
+    if (!current) throw new Error('此条已不在卷中')
+    const now = Date.now()
     const next: Memo = {
       ...current,
       title: clampChars(draft.title, 8).trim(),
       content: clampChars(draft.content, 50).trim(),
       icon: draft.icon,
+      updatedAt: now,
     }
-    await write(next)
-    setEditor(null)
-    replace(next)
+    const chainMemos = items.filter((memo) => memo.chainId === current.chainId)
+    const updates =
+      draft.icon === current.icon
+        ? [next]
+        : chainMemos.map((memo) => {
+            if (memo.id === current.id) return next
+            return { ...memo, icon: draft.icon, updatedAt: now }
+          })
+    await writeMany(updates)
+    merge(updates)
     setAnnouncement(`《${next.title}》已改记。`)
-    focusMemoControl(next.id, '.memo__body')
   }
 
-  const complete = async (memo: Memo) => {
-    const next: Memo = { ...memo, done: true, completedAt: Date.now() }
+  const addFollowUp = async (anchorId: string, draft: TaskDraft) => {
+    const anchor = items.find((memo) => memo.id === anchorId)
+    if (!anchor) throw new Error('承接之事已不在卷中')
+    if (anchor.done) throw new Error('已了之事不可再续')
+    const now = Date.now()
+    const siblings = items.filter((memo) => memo.chainId === anchor.chainId)
+    const shifted = siblings
+      .filter((memo) => memo.order > anchor.order)
+      .map((memo) => ({ ...memo, order: memo.order + 1, updatedAt: now }))
+    const memo = createMemo(
+      clampChars(draft.title, 8).trim(),
+      clampChars(draft.content, 50).trim(),
+      anchor.icon,
+      anchor.chainId,
+      anchor.order + 1,
+    )
+    await writeMany([...shifted, memo])
+    merge([...shifted, memo])
+    setAnnouncement(`后续《${memo.title}》已添。`)
+    return memo
+  }
+
+  const reorderChain = async (chainId: string, order: string[]) => {
+    const chainMemos = items.filter((memo) => memo.chainId === chainId)
+    const finished = chainMemos
+      .filter((memo) => memo.done)
+      .sort((left, right) => left.order - right.order)
+    const openById = new Map(
+      chainMemos.filter((memo) => !memo.done).map((memo) => [memo.id, memo]),
+    )
+    const ordered = order
+      .map((id) => openById.get(id))
+      .filter((memo): memo is Memo => memo !== undefined)
+    if (ordered.length !== openById.size) throw new Error('脉络不完整')
+
+    const now = Date.now()
+    const updates: Memo[] = []
+    ;[...finished, ...ordered].forEach((memo, index) => {
+      if (memo.order !== index) updates.push({ ...memo, order: index, updatedAt: now })
+    })
+    if (updates.length === 0) return
+    await writeMany(updates)
+    merge(updates)
+  }
+
+  const moveTask = async (id: string, direction: -1 | 1) => {
+    const current = items.find((memo) => memo.id === id)
+    if (!current || current.done) return
+    const chain = chains.find((item) => item.id === current.chainId)
+    if (!chain) return
+    const openTasks = chain.tasks.filter((memo) => !memo.done)
+    const index = openTasks.findIndex((memo) => memo.id === id)
+    const target = index + direction
+    if (index < 0 || target < 0 || target >= openTasks.length) return
+    const ids = openTasks.map((memo) => memo.id)
+    ;[ids[index], ids[target]] = [ids[target], ids[index]]
+    await reorderChain(chain.id, ids)
+  }
+
+  const eraseTask = async (id: string) => {
+    const target = items.find((memo) => memo.id === id)
+    if (!target) return
+    if (target.done) throw new Error('已了之事不可抹去')
+    await erase(id)
+    snapshot()
+    drop(id)
+    notify(`已抹去《${target.title}》。`)
+    setAnnouncement(`已抹去《${target.title}》。`)
+  }
+
+  const requestComplete = (memo: Memo) => {
+    if (memo.done) return
+    setCompleting(memo)
+  }
+
+  const confirmComplete = async () => {
+    const memo = completing
+    if (!memo || completingBusy) return
+    const chain = chains.find((item) => item.id === memo.chainId)
+    const successor = chain ? nextTask(chain, memo) : null
+    const next: Memo = {
+      ...memo,
+      done: true,
+      completedAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    setCompletingBusy(true)
     try {
       await write(next)
-    } catch (error) {
+    } catch {
       notify('落印未成，此事未能写入本机卷宗。')
-      throw error
+      setCompletingBusy(false)
+      return
     }
+    setCompletingBusy(false)
+    setCompleting(null)
 
     if (reducedMotion) {
       snapshot()
       replace(next)
+      setArrivingDoneId(memo.id)
     } else {
-      // 先看朱印落定，再让未竟条目淡出；状态切换后再让已了条目淡入。
-      await wait(560)
-      setLeavingId(memo.id)
-      await wait(320)
+      // 先在原位下沉，再从同一位置把下一事浮起。
+      setSinkingId(memo.id)
+      await wait(520)
       snapshot()
       replace(next)
-      setLeavingId(null)
+      setSinkingId(null)
       setArrivingDoneId(memo.id)
+      if (successor) setRisingId(successor.id)
     }
 
-    setAnnouncement(`《${memo.title}》已了。`)
-    focusMemoControl(memo.id, '.memo__seal')
-  }
-
-  const undo = async (memo: Memo) => {
-    const next: Memo = { ...memo, done: false, completedAt: null }
-    try {
-      await write(next)
-    } catch (error) {
-      notify('撤印未成，卷宗未能更新。')
-      throw error
-    }
-
-    await wait(reducedMotion ? 0 : 260)
-    snapshot()
-    replace(next)
-    setAnnouncement(`《${memo.title}》重归未竟。`)
-    focusMemoControl(memo.id, '.memo__stamp')
-  }
-
-  const eraseCurrent = async (): Promise<Memo | null> => {
-    if (!editor || editor.mode !== 'edit') return null
-    const target = items.find((item) => item.id === editor.memo.id) ?? editor.memo
-
-    try {
-      await erase(target.id)
-    } catch (error) {
-      notify('抹去未成，卷宗未能更新。')
-      throw error
-    }
-    return target
-  }
-
-  const finishErase = (target: Memo) => {
-    setEditor(null)
-    setErasingId(target.id)
-    setAnnouncement(`已抹去《${target.title}》。`)
+    setAnnouncement(
+      successor
+        ? `《${memo.title}》已了，《${successor.title}》接续。`
+        : `《${memo.title}》已了，这一脉走完了。`,
+    )
+    window.setTimeout(() => {
+      if (successor) focusMemoControl(successor.id, '.memo__stamp')
+      else document.querySelector<HTMLElement>('.add-seal')?.focus({ preventScroll: true })
+    }, 120)
   }
 
   const importMemos = async (incoming: Memo[]) => {
@@ -313,82 +384,115 @@ export default function App() {
       </div>
 
       <div className="page">
-        <Masthead />
+        <Masthead
+          studioOpen={studioOpen}
+          onToggleStudio={() => {
+            setStudioOpen((open) => !open)
+            setSeedNew(false)
+          }}
+        />
 
-        <main className="journal">
-          {!ready ? (
-            <div className="loading" role="status">
-              <span className="loading__mark" aria-hidden="true" />
-              <p>卷宗启封中</p>
-            </div>
-          ) : loadError ? (
-            <div className="load-error" role="alert">
-              <p className="load-error__title">卷宗未能启封。</p>
-              <p className="load-error__note">{loadError}</p>
-              <button type="button" className="quiet-button" onClick={journal.retry}>
-                再启一次
-              </button>
-            </div>
-          ) : (
-            <>
-              {mode === 'memory' ? (
-                <p className="storage-warning" role="alert">
-                  本机存储不可用，此卷仅存于本次开启期间。
-                </p>
-              ) : null}
+        {studioOpen && ready && !loadError ? (
+          <Studio
+            memos={items}
+            reducedMotion={reducedMotion}
+            seedNew={seedNew}
+            notify={notify}
+            onCreate={createTask}
+            onUpdate={updateTask}
+            onAddFollowUp={addFollowUp}
+            onReorder={reorderChain}
+            onMove={moveTask}
+            onErase={eraseTask}
+          />
+        ) : (
+          <main className="journal">
+            {!ready ? (
+              <div className="loading" role="status">
+                <span className="loading__mark" aria-hidden="true" />
+                <p>卷宗启封中</p>
+              </div>
+            ) : loadError ? (
+              <div className="load-error" role="alert">
+                <p className="load-error__title">卷宗未能启封。</p>
+                <p className="load-error__note">{loadError}</p>
+                <button type="button" className="quiet-button" onClick={journal.retry}>
+                  再启一次
+                </button>
+              </div>
+            ) : (
+              <>
+                {mode === 'memory' ? (
+                  <p className="storage-warning" role="alert">
+                    本机存储不可用，此卷仅存于本次开启期间。
+                  </p>
+                ) : null}
 
-              <section className="chapter chapter--open" aria-labelledby="section-open">
-                <SectionBanner kind="open" />
-                <div className="chapter__body">
-                  {open.length > 0 ? (
-                    <div className="ledger">
-                      {open.map((memo) => (
-                        <MemoRow
-                          key={memo.id}
-                          memo={memo}
-                          entering={enteringId === memo.id}
-                          erasing={erasingId === memo.id}
-                          leaving={leavingId === memo.id}
-                          arriving={arrivingDoneId === memo.id}
-                          onEdit={(item) => setEditor({ mode: 'edit', memo: item })}
-                          onComplete={complete}
-                          onUndo={undo}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState kind="open" />
-                  )}
-                </div>
-              </section>
+                <section className="chapter chapter--open" aria-labelledby="section-open">
+                  <SectionBanner kind="open" />
+                  <div className="chapter__body">
+                    {openGroups.length > 0 ? (
+                      <div className="ledger">
+                        {openGroups.map((group) => (
+                          <section
+                            className="group"
+                            key={group.icon}
+                            aria-label={`${categoryLabel(group.icon)}类`}
+                          >
+                            <p className="group__label">
+                              <span className="group__name">{categoryLabel(group.icon)}</span>
+                              <span className="group__rule" aria-hidden="true" />
+                            </p>
+                            {group.chains.map((chain) => {
+                              const head = chain.head
+                              if (!head) return null
+                              const { step, total } = stepInfo(chain, head)
+                              return (
+                                <MemoRow
+                                  key={head.id}
+                                  memo={head}
+                                  sinking={sinkingId === head.id}
+                                  rising={risingId === head.id}
+                                  arriving={false}
+                                  step={total > 1 ? stepLabel(step) : undefined}
+                                  onComplete={requestComplete}
+                                />
+                              )
+                            })}
+                          </section>
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState kind="open" />
+                    )}
+                  </div>
+                </section>
 
-              <section className="chapter chapter--done" aria-labelledby="section-done">
-                <SectionBanner kind="done" />
-                <div className="chapter__body">
-                  {done.length > 0 ? (
-                    <div className="ledger">
-                      {done.map((memo) => (
-                        <MemoRow
-                          key={memo.id}
-                          memo={memo}
-                          entering={enteringId === memo.id}
-                          erasing={erasingId === memo.id}
-                          leaving={leavingId === memo.id}
-                          arriving={arrivingDoneId === memo.id}
-                          onEdit={(item) => setEditor({ mode: 'edit', memo: item })}
-                          onComplete={complete}
-                          onUndo={undo}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState kind="done" />
-                  )}
-                </div>
-              </section>
-            </>
-          )}
-        </main>
+                <section className="chapter chapter--done" aria-labelledby="section-done">
+                  <SectionBanner kind="done" />
+                  <div className="chapter__body">
+                    {done.length > 0 ? (
+                      <div className="ledger">
+                        {done.map((memo) => (
+                          <MemoRow
+                            key={memo.id}
+                            memo={memo}
+                            sinking={false}
+                            rising={false}
+                            arriving={arrivingDoneId === memo.id}
+                            onComplete={requestComplete}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyState kind="done" />
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+          </main>
+        )}
 
         <footer className="colophon">
           {ready && !loadError ? (
@@ -396,31 +500,33 @@ export default function App() {
           ) : null}
           <span className="colophon__rule" aria-hidden="true" />
           <p className="colophon__verse">事有始终，念有归处。</p>
-          <p className="colophon__note">
-            {mode === 'memory'
-              ? '本机存储不可用；记录只存在于本次开启期间。'
-              : mode === 'local'
-                ? '此卷存于浏览器本地（兼容模式）。清除网站数据、卸载应用或设备损坏后，记录可能不可寻回。'
-                : '此卷存于本机。清除网站数据、卸载应用或设备损坏后，记录可能不可寻回。'}
-          </p>
           <p className="colophon__sign" aria-hidden="true">
-            无 锋
+            藏 锋
           </p>
         </footer>
       </div>
 
-      {ready && !loadError ? <AddSeal onClick={() => setEditor({ mode: 'new' })} /> : null}
+      {ready && !loadError && !studioOpen ? (
+        <AddSeal
+          onClick={() => {
+            setSeedNew(true)
+            setStudioOpen(true)
+          }}
+        />
+      ) : null}
 
-      {editor ? (
-        <Composer
-          key={editor.mode === 'edit' ? editor.memo.id : 'new'}
-          mode={editor.mode}
-          memo={editor.mode === 'edit' ? editor.memo : undefined}
-          onClose={() => setEditor(null)}
-          onSubmit={editor.mode === 'new' ? create : update}
-          onDelete={editor.mode === 'edit' ? eraseCurrent : undefined}
-          onDeleteFinished={editor.mode === 'edit' ? finishErase : undefined}
-          reducedMotion={reducedMotion}
+      {completing ? (
+        <ConfirmDialog
+          seal="了"
+          title="确定吗？"
+          note="确定后将不可撤销。"
+          confirmLabel="已了"
+          cancelLabel="取消"
+          busy={completingBusy}
+          onCancel={() => {
+            if (!completingBusy) setCompleting(null)
+          }}
+          onConfirm={() => void confirmComplete()}
         />
       ) : null}
 

@@ -21,19 +21,32 @@ async function context(options) {
   page.on('pageerror', (error) => console.log('[pageerror]', error.message))
   await page.goto(base, { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
-  await page.waitForTimeout(500)
+  await page.waitForTimeout(450)
   return { ctx, page }
 }
 
-async function add(page, title, content) {
-  await page.getByRole('button', { name: '新增事项' }).click()
-  await page.waitForTimeout(420)
-  await page.getByLabel('事项标题').fill(title)
-  await page.getByLabel('事项内容').fill(content)
-  await page.waitForTimeout(150)
-  await page.getByRole('button', { name: '记下' }).click()
-  await page.locator('.composer').waitFor({ state: 'detached' })
-  await page.waitForTimeout(750)
+async function create(page, kind, title, content) {
+  await page.getByRole('button', { name: '新建任务' }).click()
+  await page.getByRole('button', { name: `新建${kind}` }).click()
+  const sheet = page.locator('.studio__new-sheet')
+  await sheet.waitFor({ state: 'visible' })
+  await sheet.getByLabel('任务标题').fill(title)
+  await sheet.getByLabel('任务细则').fill(content)
+  await page.waitForTimeout(120)
+  await sheet.getByRole('button', { name: '记下' }).click()
+  await sheet.waitFor({ state: 'detached', timeout: 6000 })
+  await page.waitForTimeout(200)
+}
+
+async function follow(page, title, content) {
+  await page.getByRole('button', { name: '添加后续任务' }).click()
+  const form = page.locator('.card__follow')
+  await form.waitFor({ state: 'visible' })
+  await form.getByLabel('任务标题').fill(title)
+  await form.getByLabel('任务细则').fill(content)
+  await form.getByRole('button', { name: '记下' }).click()
+  await form.waitFor({ state: 'detached', timeout: 6000 })
+  await page.waitForTimeout(200)
 }
 
 async function blur(page) {
@@ -43,35 +56,35 @@ async function blur(page) {
   await page.mouse.move(8, 8)
 }
 
-const desktop = await context({ viewport: { width: 1440, height: 1180 }, deviceScaleFactor: 1 })
+const desktop = await context({ viewport: { width: 1440, height: 1360 }, deviceScaleFactor: 1 })
 const d = desktop.page
-await add(d, '赴约', '戌时三刻，城南旧桥。带上那柄断刃。')
-await add(d, '寻人', '问遍西市茶肆，只知她曾往北去，着青衣。')
-await add(d, '还书', '《寒山拾得》，三日后归架。')
-await add(d, '磨刀', '青石上三寸水，刀锋不必太利。')
-await d.getByRole('button', { name: '盖印完成：还书' }).click({ noWaitAfter: true })
-await d.waitForTimeout(1800)
+await d.addStyleTag({ content: '.add-seal { display: none !important; }' })
+await d.getByRole('button', { name: '编辑任务' }).click()
+await d.waitForSelector('.studio')
+await create(d, '故事', '夜渡寒江', '孤舟一盏灯，先寻渡口的老艄公。')
+await d.locator('.card__open', { hasText: '夜渡寒江' }).click()
+await follow(d, '艄公之死', '老艄公死在船头，手里攥着半枚铜钱。')
+await follow(d, '铜钱指向', '铜钱背面刻着城南酒楼的暗记。')
+await d.locator('.card__editor-close').click()
+await create(d, '故事', '旧桥问剑', '桥下埋着半截断剑，剑上刻着父亲的名。')
+await create(d, '轶闻', '酒楼听雨', '城南酒楼的说书人，知道二十年前的旧案。')
+await create(d, '收集', '残页三张', '散在城隍庙、药铺与废宅里的残页。')
+await d.waitForTimeout(300)
+await d.screenshot({ path: 'screenshots/final-studio.png', fullPage: true })
+
+await d.getByRole('button', { name: '返回卷宗' }).click()
+await d.waitForTimeout(500)
+await d.getByRole('button', { name: '盖印完成：夜渡寒江' }).click()
+await d.getByRole('alertdialog').waitFor({ state: 'visible' })
+await d.waitForTimeout(300)
+await d.screenshot({ path: 'screenshots/final-confirm.png' })
+await d.getByRole('alertdialog').getByRole('button', { name: '已了' }).click()
+await d.waitForTimeout(1600)
 await blur(d)
+await d.evaluate(() => window.scrollTo(0, 0))
+await d.waitForTimeout(250)
 await d.screenshot({ path: 'screenshots/final-desktop.png' })
 
-// 卷纸编辑层
-await d.getByRole('button', { name: '新增事项' }).click()
-await d.waitForTimeout(500)
-await d.getByLabel('事项标题').fill('夜行')
-await d.getByLabel('事项内容').fill('城北旧巷，灯灭之后再入。')
-await d.waitForTimeout(250)
-await d.screenshot({ path: 'screenshots/final-composer.png' })
-await d.getByRole('button', { name: '关闭编辑' }).click()
-await d.waitForTimeout(350)
-
-// 二次确认
-await d.getByRole('button', { name: '编辑：磨刀' }).click()
-await d.waitForTimeout(500)
-await d.getByRole('button', { name: '抹去此事' }).click()
-await d.waitForTimeout(350)
-await d.screenshot({ path: 'screenshots/final-confirm.png' })
-
-// 移动端首页
 const mobile = await context({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 2,
@@ -79,20 +92,23 @@ const mobile = await context({
   hasTouch: true,
 })
 const m = mobile.page
-await add(m, '寻人', '问遍西市茶肆，只知她曾往北去，着青衣。')
-await add(m, '赴约', '戌时三刻，城南旧桥。带上那柄断刃。')
-await m.getByRole('button', { name: '盖印完成：寻人' }).click({ noWaitAfter: true })
-await m.waitForTimeout(1800)
+await m.addStyleTag({ content: '.add-seal { display: none !important; }' })
+await m.getByRole('button', { name: '编辑任务' }).click()
+await m.waitForSelector('.studio')
+await create(m, '故事', '夜渡寒江', '孤舟一盏灯，先寻渡口的老艄公。')
+await m.locator('.card__open', { hasText: '夜渡寒江' }).click()
+await follow(m, '艄公之死', '老艄公死在船头，手里攥着半枚铜钱。')
+await m.locator('.card__editor-close').click()
+await create(m, '轶闻', '酒楼听雨', '城南酒楼的说书人，知道二十年前的旧案。')
+await create(m, '收集', '残页三张', '散在城隍庙、药铺与废宅里的残页。')
+await m.waitForTimeout(300)
+await m.screenshot({ path: 'screenshots/final-mobile-studio.png', fullPage: true })
+await m.getByRole('button', { name: '返回卷宗' }).click()
+await m.waitForTimeout(600)
 await blur(m)
-await m.screenshot({ path: 'screenshots/final-mobile.png' })
-
-// 移动端卷纸
-await m.getByRole('button', { name: '新增事项' }).click()
-await m.waitForTimeout(450)
-await m.getByLabel('事项标题').fill('夜行')
-await m.getByLabel('事项内容').fill('城北旧巷，灯灭之后再入。')
+await m.evaluate(() => window.scrollTo(0, 0))
 await m.waitForTimeout(250)
-await m.screenshot({ path: 'screenshots/final-mobile-composer.png' })
+await m.screenshot({ path: 'screenshots/final-mobile.png' })
 
 await browser.close()
 console.log('final screenshots done')

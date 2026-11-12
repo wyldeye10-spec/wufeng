@@ -6,15 +6,29 @@ export interface Memo {
   done: boolean
   createdAt: number
   completedAt: number | null
+  /** 最后一次改记时间；拖动排序与改记都会更新。 */
+  updatedAt: number
+  /** 同一脉络（系列）的任务共享此编号。 */
+  chainId: string
+  /** 在脉络中的逻辑先后，从 0 开始。 */
+  order: number
 }
 
 export type StorageMode = 'idb' | 'local' | 'memory'
 
 export type MemoIcon = 'gold-sword' | 'purple-sword' | 'white-scroll'
 
+export const MEMO_ICONS: MemoIcon[] = ['gold-sword', 'purple-sword', 'white-scroll']
+
+export const MEMO_ICON_LABELS: Record<MemoIcon, string> = {
+  'gold-sword': '故事',
+  'purple-sword': '轶闻',
+  'white-scroll': '收集',
+}
+
 export const DEFAULT_MEMO_ICON: MemoIcon = 'gold-sword'
 
-const MEMO_ICON_SET = new Set<string>(['gold-sword', 'purple-sword', 'white-scroll'])
+const MEMO_ICON_SET = new Set<string>(MEMO_ICONS)
 
 export function isMemoIcon(value: unknown): value is MemoIcon {
   return typeof value === 'string' && MEMO_ICON_SET.has(value)
@@ -55,15 +69,21 @@ export function createMemo(
   title: string,
   content: string,
   icon: MemoIcon = DEFAULT_MEMO_ICON,
+  chainId: string = newId(),
+  order = 0,
 ): Memo {
+  const now = Date.now()
   return {
     id: newId(),
     title,
     content,
     icon,
     done: false,
-    createdAt: Date.now(),
+    createdAt: now,
     completedAt: null,
+    updatedAt: now,
+    chainId,
+    order,
   }
 }
 
@@ -84,6 +104,19 @@ function normalizeMemo(raw: unknown): Memo | null {
       : done
         ? createdAt
         : null
+  const updatedAt =
+    typeof value.updatedAt === 'number' && Number.isFinite(value.updatedAt)
+      ? value.updatedAt
+      : createdAt
+  const order =
+    typeof value.order === 'number' && Number.isFinite(value.order) && value.order >= 0
+      ? Math.floor(value.order)
+      : 0
+  const chainId =
+    typeof value.chainId === 'string' && value.chainId
+      ? value.chainId
+      : // 旧记录没有脉络：一件自成一线，编号必须稳定，不能每次读取都变。
+        `legacy-${value.id}`
 
   return {
     id: value.id,
@@ -93,6 +126,9 @@ function normalizeMemo(raw: unknown): Memo | null {
     done,
     createdAt,
     completedAt,
+    updatedAt,
+    chainId,
+    order,
   }
 }
 
@@ -276,7 +312,7 @@ export class JournalStore {
     this.memory = sortMemos([...this.memory.filter((item) => item.id !== memo.id), memo])
   }
 
-  /** 批量写入：导入备份时一次事务落库，避免逐条写带来的半途状态。 */
+  /** 批量写入：导入备份、调整顺序时一次事务落库，避免逐条写带来的半途状态。 */
   async writeMany(memos: Memo[]): Promise<void> {
     if (memos.length === 0) return
 

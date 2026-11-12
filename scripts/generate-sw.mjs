@@ -38,7 +38,7 @@ const version = hash.digest('hex').slice(0, 12)
 
 const precache = files.map((file) => `./${file}`)
 
-const sw = `/* 无锋 · 离线卷宗 · 由 scripts/generate-sw.mjs 生成，请勿手改 */
+const sw = `/* 藏锋 · 离线卷宗 · 由 scripts/generate-sw.mjs 生成，请勿手改 */
 const VERSION = '${version}';
 const CACHE = 'wufeng-' + VERSION;
 const PRECACHE = ${JSON.stringify(precache, null, 2)};
@@ -94,7 +94,7 @@ self.addEventListener('fetch', (event) => {
         // 必须忽略 Vary 才能命中预缓存。
         const cached = await cache.match(SHELL, { ignoreVary: true });
         if (cached) return cached;
-        return new Response('无锋 · 离线卷宗尚未缓存，请联网后再试。', {
+        return new Response('藏锋 · 离线卷宗尚未缓存，请联网后再试。', {
           status: 503,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });

@@ -1,9 +1,9 @@
 {
   "name": "wufeng",
   "private": true,
-  "version": "2.5.0",
+  "version": "5.0.0",
   "type": "module",
-  "description": "无锋 — 一本存在于黑暗武侠世界中的私人卷宗",
+  "description": "藏锋 — 一本存在于黑暗武侠世界中的私人卷宗，以脉络串起未竟与已了",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build && node scripts/generate-sw.mjs",

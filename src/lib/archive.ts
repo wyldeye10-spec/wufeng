@@ -6,24 +6,25 @@ import {
 } from './store'
 
 /**
- * 卷宗备份格式（v2 增加事项印记）：
+ * 卷宗备份格式（v3 增加脉络与逻辑先后）：
  * {
- *   app: "无锋",
+ *   app: "藏锋",
  *   format: "wufeng-journal",
- *   version: 2,
- *   exportedAt: "2026-11-08T...",
+ *   version: 3,
+ *   exportedAt: "2026-11-12T...",
  *   memos: Memo[]
  * }
  *
- * 导入同时接受 v1 备份与旧式裸数组；缺失的印记回退为金剑。
+ * 导入同时接受 v1、v2 备份与旧式裸数组；缺失的印记回退为故事，
+ * 缺失的脉络则一件自成一线。
  */
 export const ARCHIVE_FORMAT = 'wufeng-journal'
-export const ARCHIVE_VERSION = 2
+export const ARCHIVE_VERSION = 3
 export const MAX_IMPORT_MEMOS = 5000
 export const MAX_ARCHIVE_BYTES = 8 * 1024 * 1024
 
 export interface JournalArchive {
-  app: '无锋'
+  app: '藏锋'
   format: typeof ARCHIVE_FORMAT
   version: typeof ARCHIVE_VERSION
   exportedAt: string
@@ -106,6 +107,16 @@ function readMemo(raw: unknown, index: number): Memo {
   const completedAt =
     done && isFiniteTime(raw.completedAt) ? raw.completedAt : done ? raw.createdAt : null
 
+  const updatedAt = isFiniteTime(raw.updatedAt) ? raw.updatedAt : raw.createdAt
+  const order =
+    typeof raw.order === 'number' && Number.isFinite(raw.order) && raw.order >= 0
+      ? Math.floor(raw.order)
+      : 0
+  const chainId =
+    typeof raw.chainId === 'string' && raw.chainId && raw.chainId.length <= 200
+      ? raw.chainId
+      : `legacy-${id}`
+
   return {
     id,
     title,
@@ -114,6 +125,9 @@ function readMemo(raw: unknown, index: number): Memo {
     done,
     createdAt: raw.createdAt,
     completedAt,
+    updatedAt,
+    chainId,
+    order,
   }
 }
 
@@ -149,9 +163,9 @@ export function parseArchive(text: string): ParsedArchive {
   }
 
   if (!isRecord(parsed) || parsed.format !== ARCHIVE_FORMAT) {
-    throw new ArchiveError('这不是无锋的卷宗备份。')
+    throw new ArchiveError('这不是藏锋的卷宗备份。')
   }
-  if (parsed.version !== 1 && parsed.version !== ARCHIVE_VERSION) {
+  if (parsed.version !== 1 && parsed.version !== 2 && parsed.version !== ARCHIVE_VERSION) {
     throw new ArchiveError('备份格式版本不支持。')
   }
 
@@ -163,7 +177,7 @@ export function parseArchive(text: string): ParsedArchive {
 
 export function buildArchive(memos: Memo[]): JournalArchive {
   return {
-    app: '无锋',
+    app: '藏锋',
     format: ARCHIVE_FORMAT,
     version: ARCHIVE_VERSION,
     exportedAt: new Date().toISOString(),
@@ -175,6 +189,9 @@ export function buildArchive(memos: Memo[]): JournalArchive {
       done: memo.done,
       createdAt: memo.createdAt,
       completedAt: memo.completedAt,
+      updatedAt: memo.updatedAt,
+      chainId: memo.chainId,
+      order: memo.order,
     })),
   }
 }
@@ -194,7 +211,10 @@ function sameMemo(left: Memo, right: Memo): boolean {
     left.icon === right.icon &&
     left.done === right.done &&
     left.createdAt === right.createdAt &&
-    left.completedAt === right.completedAt
+    left.completedAt === right.completedAt &&
+    left.updatedAt === right.updatedAt &&
+    left.chainId === right.chainId &&
+    left.order === right.order
   )
 }
 
